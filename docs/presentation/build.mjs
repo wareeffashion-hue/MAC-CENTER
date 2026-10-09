@@ -55,7 +55,7 @@ add('light split', `
   <div>
     <p class="kicker">الاتجاه الإبداعي</p>
     <h2>عربة ماك</h2>
-    <p class="body">كل شيء في الواجهة مستنسخ من عربة الشعار: سلتها نافذة لكل قسم بخطوط السرعة والعجلتين، يرسم داخلها القسم نفسه بخط ذهبي، وتدخل مندفعة ثم تستقر، وترفع مقدمتها عند المرور.</p>
+    <p class="body">كل شيء في الواجهة مستنسخ من عربة الشعار: خطها الأصفر يحتضن كل قسم مع خطوط السرعة والعجلتين، ويرسم القسم نفسه داخلها بخط أخضر، وتدخل مندفعة ثم تستقر، وترفع مقدمتها عند المرور.</p>
     <ul class="ticks">
       <li>ألوان ملف الشعار: الأخضر <span class="sw" style="background:#084832"></span><span class="sw" style="background:#006442"></span><span class="sw" style="background:#0C714F"></span> والأصفر <span class="sw" style="background:#FFBA1D"></span><span class="sw" style="background:#FFAE00"></span><span class="sw" style="background:#FFC72E"></span></li>
       <li>خط Gamila Arabic المعتمد، بأوزانه الخفيف والعادي والعريض</li>
@@ -327,17 +327,17 @@ p { margin: 0; }
 .cover .lead { font-size: 30px; color: #4B5C53; margin: 50px 0 28px; }
 .cover .meta { font-size: 22px; color: #75847B; padding-top: 22px; border-top: 1px solid rgba(15,34,25,.14); display: inline-block; }
 .cover-arch { align-self: center; }
-.arch { position: relative; display: block; width: 100%; aspect-ratio: 400 / 256; }
+.arch { position: relative; display: block; width: 100%; aspect-ratio: 400 / 256; container-type: inline-size; }
 .cw-body { position: absolute; inset: 0 .6% 0 23.9%; margin-bottom: 16%; }
-.arch-in { position: absolute; inset: 0; clip-path: ${CLIP}; background: radial-gradient(120% 80% at 62% 30%, #0E5A3F 0%, #084832 55%, #063A28 100%); }
+.arch-in { position: absolute; inset: 0; clip-path: ${CLIP}; }
 .cw-line { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.cw-line path { fill: none; stroke: #FFBA1D; stroke-opacity: .6; stroke-width: 2px; stroke-linecap: round; stroke-linejoin: round; }
+.cw-line path { fill: none; stroke: #FFBA1D; stroke-width: 6.4cqi; stroke-linecap: butt; stroke-linejoin: round; }
 .cw-sp { position: absolute; left: -29.7%; top: 29.4%; width: 23.8%; aspect-ratio: 72 / 25.7; background: #FFBA1D; border-radius: 1px; }
 .cw-sp2 { left: -22.4%; top: 58.8%; }
 .cw-wh { position: absolute; left: 38.4%; top: 100%; width: 14.7%; aspect-ratio: 1; margin-top: 5.9%; border-radius: 50%; background: #FFBA1D; }
 .cw-wh2 { left: 61.9%; }
-.lineart { position: absolute; inset: 25% 13% 7% 21%; width: auto; height: auto; }
-.lineart path { fill: none; stroke: #FFBA1D; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; }
+.lineart { position: absolute; inset: 34% 15% 16% 25%; width: auto; height: auto; }
+.lineart path { fill: none; stroke: #006442; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
 .end .statement { font-size: 120px; line-height: 1.25; margin-bottom: 120px; }
 .end-logo .logo { height: 230px; width: auto; }
 

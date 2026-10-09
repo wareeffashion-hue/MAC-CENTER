@@ -78,7 +78,7 @@ export const CLIP = (() => {
   return `polygon(${pts.join(', ')})`;
 })();
 // الخط الذهبي الداخلي: مقبض العربة ثم جوانب السلة، وتعرّج حرف M في الأعلى بعمق أخف
-const LINE = 'M428 913H475.4C497 913 515.5 927.6 521 948.5L544.8 1037.2C550 1057 568 1072.8 590.9 1072.8H728C745 1072.8 762 1065 772.8 1051.7C784.5 1037 788 1019 783.1 1001.6L764.4 933.5C761 920 750 913 737.5 913C730 913 723 917 718 924L692 952C688 956 681 956 677 952L651 924C646 917 639 913 632.5 913C625 913 618 917 614 925L596 962';
+const LINE = 'M428 913H475.4C497 913 515.5 927.6 521 948.5L544.8 1037.2C550 1057 568 1072.8 590.9 1072.8H728C745 1072.8 762 1065 772.8 1051.7C784.5 1037 788 1019 783.1 1001.6L764.4 933.5C761 920 750 913 737.5 913C730 913 723 917 718 924L691 940C688 944 681 944 678 940L651 924C646 917 639 913 632.5 913C625 913 618 917 614 925L600 950';
 const CW = `<svg class="cw-line" viewBox="${BODY.x} ${BODY.y} ${BODY.w} ${BODY.h}" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" vector-effect="non-scaling-stroke" d="${LINE}"/></svg><i class="cw-sp"></i><i class="cw-sp cw-sp2"></i><i class="cw-wh"></i><i class="cw-wh cw-wh2"></i>`;
 
 export function arch(kind, { image, label = '', cls = '', draw = false } = {}) {
