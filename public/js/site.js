@@ -165,38 +165,185 @@
     }
   });
 
-  // ——— واجهة العرض: الأقسام تتبدل في النافذة وترسم خطوطها ———
-  const vit = $('[data-vitrine]');
-  if (vit) {
-    const items = $$('.vitrine-item', vit);
-    const btns = $$('[data-show]', vit);
-    const cart = $('.vitrine-cart', vit);
-    let cur = 0, timer = null, paused = false;
-    const show = (n) => {
-      if (n === cur) return;
-      const prev = items[cur];
-      prev.classList.remove('on'); prev.classList.add('off'); prev.setAttribute('aria-hidden', 'true');
-      setTimeout(() => prev.classList.remove('off'), 1300);
-      const next = items[n];
-      next.classList.add('on'); next.setAttribute('aria-hidden', 'false');
-      const svg = $('.lineart', next);
-      if (svg) { svg.classList.remove('drawn'); void svg.getBoundingClientRect(); svg.classList.add('drawn'); }
-      drive($('.arch', next));
-      btns.forEach((b, i) => { b.classList.toggle('on', i === n); b.setAttribute('aria-pressed', i === n); });
-      cart?.classList.remove('roll'); void cart?.offsetWidth; cart?.classList.add('roll');
-      cur = n;
+  // ——— محرك العربة: ترسم العربة نفسها، وتخرج منها الأقسام، وتتبع المؤشر، وتنطلق مع التمرير ———
+  const eng = $('[data-engine]');
+  if (eng) {
+    const cart = $('[data-cart]', eng), svg = $('.ec', eng);
+    const body = $('.ec-body', eng), shadow = $('.ec-shadow', eng);
+    const sps = $$('.ec-sp', eng), whs = $$('.ec-wh', eng);
+    const items = $$('[data-ei]', eng), itemsBox = $('.engine-items', eng);
+    const cv = $('[data-trail]', eng), cx = cv.getContext('2d');
+    const hero = eng.closest('.hero') || eng;
+    const G = '#0D6A4A', Y = '#FFBA1D', P = '#CFE0CC';
+    let live = false, burstAnims = [];
+
+    // مواضع الأقسام: قوس فوق العربة
+    const CENTER = [50, 60], R = [47, 54];
+    items.forEach((it, i) => {
+      const a = (196 + i * (148 / Math.max(1, items.length - 1))) * Math.PI / 180;
+      it.style.setProperty('--ex', `${CENTER[0] + Math.cos(a) * R[0]}%`);
+      it.style.setProperty('--ey', `${CENTER[1] + Math.sin(a) * R[1]}%`);
+    });
+    // فوهة السلة في إحداثيات المحرك
+    const mouth = () => {
+      const e = eng.getBoundingClientRect(), s = svg.getBoundingClientRect();
+      return { x: s.left - e.left + s.width * ((680 - 380) / 450), y: s.top - e.top + s.height * ((985 - 870) / 300) };
     };
-    const first = $('.lineart', items[0]);
-    if (document.body.classList.contains('has-intro')) document.addEventListener('intro:done', () => setTimeout(() => first?.classList.add('drawn'), 450), { once: true });
-    else setTimeout(() => first?.classList.add('drawn'), 450);
-    btns.forEach((b, i) => b.addEventListener('click', () => { show(i); restart(); }));
-    const tick = () => { if (!paused && !document.hidden) show((cur + 1) % items.length); };
-    const restart = () => { clearInterval(timer); if (!reduce) timer = setInterval(tick, 4800); };
-    vit.addEventListener('pointerenter', () => { paused = true; });
-    vit.addEventListener('pointerleave', () => { paused = false; });
-    vit.addEventListener('focusin', () => { paused = true; });
-    vit.addEventListener('focusout', () => { paused = false; });
-    restart();
+    // تخرج الأقسام من السلة بأقواس
+    function burst(delay = 0) {
+      burstAnims.forEach((a) => a.cancel());
+      const m = mouth(), e = eng.getBoundingClientRect();
+      burstAnims = items.map((it, i) => {
+        const r = it.getBoundingClientRect();
+        const tx = r.left - e.left + r.width / 2, ty = r.top - e.top + r.height / 2;
+        const dx = m.x - tx, dy = m.y - ty, rot = (i % 2 ? 1 : -1) * (40 + i * 12);
+        return it.animate([
+          { opacity: 0, transform: `translate(${dx}px, ${dy}px) scale(.15) rotate(${rot}deg)` },
+          { opacity: 1, offset: .4, transform: `translate(${dx * .5}px, ${dy * .5 - 110}px) scale(.85) rotate(${rot / 3}deg)` },
+          { opacity: 1, transform: 'none' },
+        ], { duration: 1150, delay: delay + i * 85, easing: 'cubic-bezier(.22, .9, .25, 1.12)', fill: 'backwards' });
+      });
+      emit(26, 7);
+    }
+    // تعود الأقسام إلى السلة
+    function collect() {
+      const m = mouth(), e = eng.getBoundingClientRect();
+      return Promise.all(items.map((it, i) => {
+        const r = it.getBoundingClientRect();
+        const dx = m.x - (r.left - e.left + r.width / 2), dy = m.y - (r.top - e.top + r.height / 2);
+        return it.animate([{ transform: 'none', opacity: 1 }, { transform: `translate(${dx}px, ${dy}px) scale(.1) rotate(${i % 2 ? 90 : -90}deg)`, opacity: 0 }],
+          { duration: 480, delay: (items.length - 1 - i) * 40, easing: 'cubic-bezier(.6, 0, .9, .4)', fill: 'forwards' }).finished;
+      }));
+    }
+
+    // الدخول: يرسم الخط، وتنطلق خطوط السرعة، وتهبط العجلتان، ثم تخرج الأقسام
+    function start() {
+      if (live) return;
+      const D = { duration: 1500, easing: 'cubic-bezier(.65, 0, .25, 1)', fill: 'backwards' };
+      shadow.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { ...D, delay: 150 });
+      body.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], D);
+      sps.forEach((sp, i) => sp.animate([{ opacity: 0, transform: 'scaleX(0)' }, { opacity: 1, transform: 'scaleX(2.6)', offset: .45 }, { opacity: 1, transform: 'scaleX(1)' }],
+        { duration: 900, delay: 900 + i * 90, easing: 'cubic-bezier(.16, 1, .3, 1)', fill: 'backwards' }));
+      whs.forEach((w, i) => w.animate([{ opacity: 0, transform: 'translateY(-260%) scale(.5)' }, { opacity: 1, transform: 'translateY(18%) scale(1.18, .8)', offset: .6 }, { opacity: 1, transform: 'none' }],
+        { duration: 800, delay: 1150 + i * 110, easing: 'cubic-bezier(.3, 0, .2, 1)', fill: 'backwards' }));
+      eng.classList.add('live');
+      live = true;
+      burst(1550);
+      setTimeout(() => eng.classList.add('hinted'), 3200);
+      loop();
+    }
+
+    // الضغط: تقفز العربة، تبتلع الأقسام ثم تقذفها من جديد
+    let busy = false;
+    cart.addEventListener('click', async () => {
+      if (!live || busy) return;
+      busy = true;
+      svg.animate([{ transform: 'none' }, { transform: 'translate(-2%, -9%) rotate(-7deg)', offset: .35 }, { transform: 'translate(1%, 2%) scale(1.04, .93)', offset: .7 }, { transform: 'none' }],
+        { duration: 650, easing: 'cubic-bezier(.3, 0, .2, 1)' });
+      kick = 1;
+      await collect();
+      burst(80);
+      setTimeout(() => { busy = false; }, 900);
+    });
+
+    // المؤشر والتمرير
+    let px = 0, py = 0, speed = 0, kick = 0, lastX = null, lastY = null, sv = 0, lastS = scrollY;
+    let rot = 0, tx = 0, ty = 0, visible = true, raf = 0, t0 = performance.now();
+    hero.addEventListener('pointermove', (e) => {
+      const r = eng.getBoundingClientRect();
+      px = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / (r.width / 2)));
+      py = Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / (r.height / 2)));
+      if (lastX !== null) speed = Math.min(80, speed + Math.hypot(e.clientX - lastX, e.clientY - lastY) * .35);
+      lastX = e.clientX; lastY = e.clientY;
+    });
+    hero.addEventListener('pointerleave', () => { px = 0; py = 0; lastX = null; });
+
+    // ذيل خطوط السرعة على اللوحة
+    const parts = [];
+    let dpr = 1;
+    const size = () => { dpr = Math.min(2, devicePixelRatio || 1); cv.width = cv.clientWidth * dpr; cv.height = cv.clientHeight * dpr; };
+    size();
+    addEventListener('resize', size);
+    function emit(n, power = 1) {
+      if (!live) return;
+      const c = cv.getBoundingClientRect();
+      for (let k = 0; k < n; k++) {
+        const sp = sps[Math.floor(Math.random() * sps.length)].getBoundingClientRect();
+        const ang = rot * Math.PI / 180;
+        const v = (2.5 + Math.random() * 3) * power;
+        parts.push({
+          x: (sp.left - c.left) * dpr, y: (sp.top - c.top + Math.random() * sp.height) * dpr,
+          vx: -Math.cos(ang) * v * dpr, vy: -Math.sin(ang) * v * dpr,
+          len: (18 + Math.random() * 46) * dpr, w: Math.max(2, sp.height * (.25 + Math.random() * .35)) * dpr,
+          life: 1, c: Math.random() < .22 ? Y : (Math.random() < .5 ? G : P),
+        });
+      }
+      if (parts.length > 260) parts.splice(0, parts.length - 260);
+    }
+    function draw() {
+      cx.clearRect(0, 0, cv.width, cv.height);
+      cx.lineCap = 'butt';
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const p = parts[i];
+        p.x += p.vx; p.y += p.vy; p.life -= .018;
+        if (p.life <= 0) { parts.splice(i, 1); continue; }
+        const k = Math.hypot(p.vx, p.vy) || 1, l = p.len * p.life;
+        cx.globalAlpha = Math.min(1, p.life * 1.4);
+        cx.strokeStyle = p.c; cx.lineWidth = p.w * (.5 + p.life * .5);
+        cx.beginPath(); cx.moveTo(p.x, p.y); cx.lineTo(p.x - p.vx / k * l, p.y - p.vy / k * l); cx.stroke();
+      }
+      cx.globalAlpha = 1;
+    }
+
+    function loop() {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(function frame(now) {
+        const t = (now - t0) / 1000;
+        const hr = hero.getBoundingClientRect();
+        const prog = Math.max(0, Math.min(1, -hr.top / Math.max(1, hr.height * .9)));
+        sv += (Math.abs(scrollY - lastS) - sv) * .2; lastS = scrollY;
+        speed *= .9; kick *= .94;
+        const energy = Math.min(1, speed / 60 + sv / 40 + kick);
+        // ميل وانزلاق نابض نحو المؤشر، وانطلاق مع التمرير
+        rot += ((px * 5 - energy * 4 + Math.sin(t * 1.3) * .8) - rot) * .07;
+        tx += ((px * 18 + prog * prog * hr.width * .7) - tx) * .08;
+        ty += ((py * 10 + Math.sin(t * 2.1) * 3) - ty) * .08;
+        cart.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg)`;
+        itemsBox.style.transform = `translate(${px * -10}px, ${py * -8 - prog * 120}px)`;
+        itemsBox.style.opacity = String(Math.max(0, 1 - prog * 1.6));
+        const stretch = 1 + energy * 1.8 + prog * 2.5 + (Math.sin(t * 9) > .96 ? .25 : 0);
+        sps.forEach((sp, i) => { sp.style.transform = `scaleX(${stretch * (1 + i * .08 * energy)})`; });
+        whs.forEach((w, i) => { w.style.transform = `translateY(${-Math.abs(Math.sin(t * 14 + i)) * energy * 14}%)`; });
+        // معدل الذيل: هادئ في السكون، كثيف مع الحركة
+        const rate = .12 + energy * 2.4 + prog * 2;
+        let n = Math.floor(rate) + (Math.random() < rate % 1 ? 1 : 0);
+        if (n) emit(n, 1 + energy * 2.2 + prog * 2);
+        draw();
+        if (visible && !document.hidden) raf = requestAnimationFrame(frame);
+      });
+    }
+    new IntersectionObserver(([en]) => { visible = en.isIntersecting; if (visible && live) loop(); }).observe(hero);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && visible && live) loop(); });
+
+    if (reduce || !Element.prototype.animate) { eng.classList.add('live', 'hinted'); }
+    else if (document.body.classList.contains('has-intro')) document.addEventListener('intro:done', () => setTimeout(start, 200), { once: true });
+    else setTimeout(start, 350);
+  }
+
+  // ——— سرعة التمرير: تمد خطوط سرعة الشعار، وتسوق عربة الطريق أسفل الشاشة ———
+  {
+    const brand = $('.brand'), road = $('[data-road]');
+    let last = scrollY, v = 0, ticking = false;
+    const tick = () => {
+      const d = Math.abs(scrollY - last); last = scrollY;
+      v += (Math.min(1, d / 60) - v) * .25;
+      const max = document.documentElement.scrollHeight - innerHeight;
+      if (road) { road.style.setProperty('--p', max > 0 ? (scrollY / max).toFixed(4) : 0); road.style.setProperty('--sv', v.toFixed(3)); }
+      if (brand) brand.style.setProperty('--sv', v.toFixed(3));
+      if (v > .005) requestAnimationFrame(tick); else { ticking = false; v = 0; brand?.style.setProperty('--sv', 0); road?.style.setProperty('--sv', 0); }
+    };
+    if (!reduce) addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(tick); } }, { passive: true });
+    if (road) { const max = document.documentElement.scrollHeight - innerHeight; road.style.setProperty('--p', max > 0 ? (scrollY / max).toFixed(4) : 0); }
   }
 
   // ——— الظهور عند التمرير ورسم الخطوط ———

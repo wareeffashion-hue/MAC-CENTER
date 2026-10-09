@@ -1,7 +1,7 @@
 import { esc } from '../http.js';
 import { config } from '../config.js';
 import { layout, CART, AR_NUM } from './layout.js';
-import { arch } from './art.js';
+import { arch, engine } from './art.js';
 import { weekTable, openingHoursSpec } from '../lib/hours.js';
 import { formatDate, isoToRiyadhLocal } from '../lib/time.js';
 import { SERVICE_LABELS, CONSENT_TEXT, waLink, inquiryText } from '../modules/catalog.js';
@@ -47,15 +47,7 @@ export function homePage({ site, branches, sections, offers, faqs, reviews, intr
         ${linkArrow('#branches', 'اكتشف الفروع')}
       </div>
     </div>
-    <div class="vitrine" data-vitrine>
-      <div class="vitrine-stage">
-        ${sections.map((s, i) => `<figure class="vitrine-item ${i === 0 ? 'on' : ''}" data-i="${i}" aria-hidden="${i === 0 ? 'false' : 'true'}">${win(s, s.art, { label: s.name, draw: true, cls: 'arch-lg' })}</figure>`).join('')}
-        <span class="vitrine-cart">${CART()}</span>
-      </div>
-      <ol class="vitrine-index" aria-label="الأقسام">
-        ${sections.map((s, i) => `<li><button type="button" data-show="${i}" class="${i === 0 ? 'on' : ''}" aria-pressed="${i === 0}"><span class="vi-n">${AR_NUM(i + 1)}</span><span class="vi-t">${esc(s.name)}</span></button></li>`).join('')}
-      </ol>
-    </div>
+    ${engine(sections)}
   </div>
   <a class="scroll-cue" href="#about" aria-label="تابع إلى الأسفل"><span></span></a>
 </section>`;

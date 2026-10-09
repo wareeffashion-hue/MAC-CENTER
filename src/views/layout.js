@@ -90,6 +90,7 @@ ${intro ? introMarkup(intro) : ''}
     <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" data-menu><span class="menu-lines" aria-hidden="true"><i></i><i></i></span><span class="menu-txt">القائمة</span></button>
   </div>
 </header>
+<div class="road" aria-hidden="true" data-road><span class="road-cart">${CART()}</span></div>
 <div class="menu" id="menu" hidden data-menu-panel role="dialog" aria-modal="true" aria-label="القائمة">
   <div class="menu-in">
     <nav class="menu-nav" aria-label="القائمة">

@@ -113,6 +113,41 @@ html.js .lineart.draw path { stroke-dasharray: 1; stroke-dashoffset: 1; }
 html.js .drawn .lineart.draw path, html.js .lineart.draw.drawn path { animation: draw 1.8s var(--out) forwards; animation-delay: calc(var(--d) * 140ms + 150ms); }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 
+/* ——— محرك العربة: الشعار قلب الواجهة ——— */
+.engine { position: relative; width: 100%; max-width: 900px; aspect-ratio: 1 / .86; justify-self: center; align-self: center; }
+.engine-trail { position: absolute; top: -25%; left: -60vw; width: calc(100% + 60vw + 8%); height: 140%; pointer-events: none; z-index: 0; }
+.engine-cart { all: unset; position: absolute; z-index: 2; left: 50%; top: 62%; width: 70%; translate: -50% -50%; cursor: pointer; transform-origin: 62% 85%; -webkit-tap-highlight-color: transparent; }
+.engine-cart:focus-visible { outline: 2px solid var(--y2); outline-offset: 10px; border-radius: 12px; }
+.ec { display: block; width: 100%; height: auto; overflow: visible; }
+.ec-body { fill: none; stroke: #0D6A4A; stroke-width: 25.7; stroke-linejoin: round; }
+.ec-shadow { fill: none; stroke: #DCE8D9; stroke-width: 25.7; stroke-linejoin: round; }
+.ec-sp { fill: #0D6A4A; transform-box: fill-box; transform-origin: 100% 50%; }
+.ec-sp-y { fill: var(--y); }
+.ec-wh { fill: var(--y); transform-box: fill-box; transform-origin: 50% 50%; }
+html.js .engine:not(.live) :is(.ec-body, .ec-shadow) { stroke-dasharray: 1; stroke-dashoffset: 1; }
+html.js .engine:not(.live) :is(.ec-sp, .ec-wh) { opacity: 0; }
+.engine-items { position: absolute; inset: 0; z-index: 1; }
+.ei { all: unset; position: absolute; left: var(--ex, 50%); top: var(--ey, 50%); translate: -50% -50%; display: grid; justify-items: center; gap: 4px; cursor: pointer; opacity: 0; -webkit-tap-highlight-color: transparent; }
+.engine.live .ei { opacity: 1; }
+.ei-art { width: clamp(44px, 4.6vw, 72px); height: auto; overflow: visible; animation: ei-bob calc(3s + var(--i) * .35s) ease-in-out infinite alternate; transition: scale .5s var(--out); }
+.ei-art path { fill: none; stroke: var(--g2); stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; }
+.ei-t { font-size: 13px; font-weight: 700; color: var(--g); white-space: nowrap; transition: color .3s; }
+.ei:is(:hover, :focus-visible) .ei-art { scale: 1.16; }
+.ei:is(:hover, :focus-visible) .ei-art path { stroke: var(--y2); }
+.ei:focus-visible { outline: 2px solid var(--y2); outline-offset: 6px; border-radius: 8px; }
+@keyframes ei-bob { from { translate: 0 -5px; rotate: -3deg; } to { translate: 0 5px; rotate: 3deg; } }
+.engine-hint { position: absolute; z-index: 2; bottom: 0; left: 50%; translate: -50% 0; margin: 0; font-size: 12px; letter-spacing: .02em; color: var(--ink3); white-space: nowrap; opacity: 0; transition: opacity 1s; }
+.engine.hinted .engine-hint { opacity: 1; }
+.engine-hint span::before { content: ""; display: inline-block; width: 18px; height: 2px; margin-inline-end: 8px; vertical-align: middle; background: var(--y); }
+
+/* طريق التمرير: عربة صغيرة تقطع أسفل الشاشة بقدر ما قرأت */
+.road { position: fixed; z-index: 55; left: 0; right: 0; bottom: 0; height: 2px; pointer-events: none; }
+.road::before { content: ""; position: absolute; inset: 0; background: var(--y); transform-origin: 0 50%; scale: var(--p, 0) 1; }
+.road-cart { position: absolute; bottom: 3px; left: calc(var(--p, 0) * 100%); width: 30px; translate: -100% 0; transform-origin: 30% 100%; transform: skewX(calc(var(--sv, 0) * -14deg)); }
+.road-cart .cart-mark { width: 100%; height: auto; fill: var(--y2); }
+/* الشعار في الترويسة يمد خطوط سرعته بقدر سرعة التمرير */
+.brand .logo .mc-sp { transform-box: fill-box; transform-origin: 100% 50%; scale: calc(1 + var(--sv, 0) * 1.6) 1; }
+
 /* ——— الترويسة ——— */
 .hdr { position: fixed; z-index: 80; inset: 0 0 auto; height: var(--hdr); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 var(--pad); color: var(--ink); transition: transform .7s var(--expo), background-color .5s, color .5s, height .5s var(--out); }
 .on-dark .hdr:not(.solid) { color: var(--ivory); --logo-word: var(--ivory); }
@@ -192,33 +227,16 @@ html.js .drawn .lineart.draw path, html.js .lineart.draw.drawn path { animation:
 
 /* ——— البطل ——— */
 .hero { position: relative; min-height: 100svh; display: flex; flex-direction: column; justify-content: flex-end; padding: calc(var(--hdr) + 48px) var(--pad) 48px; background: var(--offwhite); color: var(--g); overflow: hidden; isolation: isolate; }
-.hero::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--pat) left -18vw top -14vh / min(50vw, 760px) auto no-repeat; opacity: 1; pointer-events: none; }
+.hero::before { content: none; }
 .hero::after { content: ""; position: absolute; inset-inline: 0; bottom: 0; height: 6px; background: repeating-linear-gradient(90deg, var(--y) 0 56px, transparent 56px 72px); pointer-events: none; }
-.hero-grid { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 120px); align-items: end; }
-.hero-title { font-size: clamp(44px, 5.3vw, 96px); line-height: 1.12; margin-bottom: 34px; }
+.hero-grid { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: clamp(32px, 6vw, 120px); align-items: end; }
+.hero-title { font-size: clamp(40px, 4.4vw, 84px); line-height: 1.12; margin-bottom: 34px; }
 .hero-title .ln { display: block; overflow: hidden; padding: .06em 0 .14em; margin: -.06em 0 -.14em; }
 .hero-title .ln > span { display: inline-block; }
 .hero-title .light { font-weight: 300; color: var(--g3); }
 .hero-lead { max-width: 31em; font-size: clamp(17px, 1.3vw, 20px); color: var(--ink2); margin-bottom: 40px; }
 .hero-ctas { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 40px; }
-.vitrine { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: clamp(20px, 3vw, 48px); align-items: end; }
-.vitrine-stage { position: relative; width: min(100%, 420px, 52vh); aspect-ratio: 3 / 4; justify-self: center; }
-.vitrine-stage::after { content: ""; position: absolute; inset-inline: -40px; bottom: 0; height: 1px; background: var(--hair); }
-.vitrine-item { position: absolute; inset: 0; margin: 0; clip-path: inset(100% 0 0 0); transition: clip-path 1.3s var(--expo); }
-.vitrine-item.on { clip-path: inset(0 0 0 0); z-index: 1; }
-.vitrine-item.off { clip-path: inset(0 0 100% 0); z-index: 2; }
-.vitrine-item .lineart { transform: scale(1.08); }
-.vitrine-item.on .lineart { transform: none; transition-delay: .2s; }
-.vitrine-cart { position: absolute; z-index: 3; bottom: 1px; left: -28%; width: 22%; }
-.vitrine-cart .cart-mark { width: 100%; height: auto; fill: var(--y); }
-.vitrine-cart.roll { animation: roll 1.3s var(--expo); }
 @keyframes roll { 0% { transform: none; } 45% { transform: translateX(-14px); } 100% { transform: none; } }
-.vitrine-index { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; align-self: center; }
-.vitrine-index { max-width: 190px; }
-.vitrine-index button { display: flex; align-items: center; gap: 12px; padding: 6px 0; text-align: start; line-height: 1.5; border: 0; background: none; color: var(--ink3); font-size: 14px; font-weight: 700; cursor: pointer; transition: color .4s; }
-.vitrine-index button::after { content: ""; width: 0; height: 1px; background: var(--y); transition: width .6s var(--out); }
-.vitrine-index button.on, .vitrine-index button:hover { color: var(--g); }
-.vitrine-index button.on::after { width: 28px; }
 .vi-n { color: var(--y2); font-weight: 400; }
 .scroll-cue { position: absolute; z-index: 1; left: 50%; bottom: 6px; width: 1px; height: 70px; translate: -50% 0; background: var(--hair); overflow: hidden; }
 .scroll-cue span { position: absolute; inset: 0; background: var(--y); transform: translateY(-100%); animation: cue 2.2s var(--expo) infinite; }
@@ -230,9 +248,6 @@ html.js .drawn .lineart.draw path, html.js .lineart.draw.drawn path { animation:
   .hero-title .ln:nth-child(1) > span { animation-delay: var(--t0, .25s); }
   .hero-title .ln:nth-child(2) > span { animation-delay: calc(var(--t0, .25s) + .12s); }
   .hero-lead, .hero-ctas { animation: fade-up 1s var(--out) both; animation-delay: calc(var(--t0, .25s) + .45s); }
-  .vitrine-index { animation: fade-up 1s var(--out) both; animation-delay: calc(var(--t0, .25s) + .6s); }
-  .vitrine-stage { animation: stage-in 1.4s var(--expo) both; animation-delay: calc(var(--t0, .25s) + .05s); }
-  .vitrine-cart { animation: cart-in 1.2s var(--out) both; animation-delay: calc(var(--t0, .25s) + .9s); }
   html.js .has-intro .hero, html.js .has-intro .hero * { animation-play-state: paused !important; }
   @keyframes rise-in { from { transform: translateY(110%); } }
   @keyframes fade-up { from { opacity: 0; transform: translateY(16px); } }
@@ -569,21 +584,18 @@ input[type="file"]::file-selector-button { margin-inline-end: 16px; padding: 10p
   .svc-i:nth-child(n+3) { border-top: 1px solid var(--hair); }
 }
 @media (max-width: 900px) {
-  .hero::before { background-position: left -34vw bottom -6vh; background-size: 82vw auto; opacity: .16; }
   :root { --hdr: 68px; }
   body { font-size: 17px; }
   .hdr-cta { display: none; }
   .brand .logo { height: 38px; }
   .hero { min-height: auto; padding-top: calc(var(--hdr) + 36px); }
   .hero-grid, .p-head, .f-page, .faq-s, .cols, .menu-in { grid-template-columns: 1fr; }
-  .vitrine { grid-template-columns: 1fr; gap: 18px; order: -1; }
   .hero-copy { order: 2; }
-  .vitrine-stage { justify-self: center; width: min(74vw, 46vh); }
-  .vitrine-cart { left: -2%; width: 20%; }
+  .engine { order: -1; max-width: 520px; aspect-ratio: 1 / .82; }
+  .engine-cart { top: 64%; width: 62%; }
+  .ei-t { font-size: 11px; }
+  .road { display: none; }
   .f-aside .g-note { display: none; }
-  .vitrine-index { display: flex; overflow-x: auto; gap: 18px; scrollbar-width: none; padding-bottom: 6px; max-width: none; }
-  .vitrine-index button { white-space: nowrap; }
-  .vitrine-index button { font-size: 13px; }
   .scroll-cue { display: none; }
   .statement-sub { margin-inline-start: 0; }
   .depts { height: auto !important; }

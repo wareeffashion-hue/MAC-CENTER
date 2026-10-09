@@ -1,3 +1,4 @@
+import { esc } from '../http.js';
 // رسومات خطية ذهبية رفيعة لكل قسم، ترسم نفسها داخل ورقة القسم.
 // تبقى بديلًا أنيقًا حتى ترفع الإدارة الصور الحقيقية من اللوحة.
 
@@ -66,3 +67,24 @@ export function arch(kind, { image, label = '', cls = '', draw = false } = {}) {
 // متوافق مع الاستخدام السابق
 export function art(kind, label = '') { return arch(kind, { label }); }
 export const SPRITE = '';
+
+// «محرك العربة»: عربة الشعار مرسومة بخط واحد بإحداثيات الشعار الأصلي، تخرج منها الأقسام وتتفاعل مع المؤشر والتمرير
+const ENGINE_BODY = 'M428 913H475.4C497 913 516 927 521.5 948.5L544.8 1037.2C550.3 1058.2 569.3 1072.8 590.9 1072.8H728C745.2 1072.8 762 1065.3 772.8 1051.7C784.2 1037.5 787.9 1019.1 783.1 1001.6L764.4 933.5C761 921.4 750 913 737.5 913C726 913 716 919.5 711.3 930L693 980C689.5 990 679.5 990 676 980L659 930C655 919.5 644.5 913 632.5 913C620 913 609 921 605.4 933.6L581.7 1011.6';
+export function engine(sections = []) {
+  const items = sections.slice(0, 6).map((s, i) => `<button type="button" class="ei" style="--i:${i}" data-open-section="${esc(s.slug)}" data-ei aria-label="${esc(s.name)}">
+      <svg class="ei-art" viewBox="0 0 200 200" aria-hidden="true">${(LINES[s.art] || LINES.mall).map((d) => `<path d="${d}"/>`).join('')}</svg>
+      <span class="ei-t">${esc(s.name.length > 16 ? s.name.split(' ')[0] : s.name)}</span></button>`).join('');
+  return `<div class="engine" data-engine>
+    <canvas class="engine-trail" aria-hidden="true" data-trail></canvas>
+    <div class="engine-items">${items}</div>
+    <button type="button" class="engine-cart" data-cart aria-label="العربة: اضغط لتخرج الأقسام من جديد">
+      <svg class="ec" viewBox="380 870 450 300" aria-hidden="true">
+        <g class="ec-sps"><rect class="ec-sp" x="405.9" y="954.6" width="72" height="25.7"/><rect class="ec-sp ec-sp-y" x="428" y="1009.2" width="71.9" height="25.7"/><rect class="ec-sp" x="414" y="1063.8" width="76" height="25.7"/></g>
+        <path class="ec-shadow" d="${ENGINE_BODY}" transform="translate(9 16)" pathLength="1"/>
+        <path class="ec-body" d="${ENGINE_BODY}" pathLength="1"/>
+        <circle class="ec-wh" cx="633.8" cy="1125.7" r="22.2"/><circle class="ec-wh" cx="704.5" cy="1125.7" r="22.2"/>
+      </svg>
+    </button>
+    <p class="engine-hint" aria-hidden="true"><span>حرّك المؤشر · اضغط العربة</span></p>
+  </div>`;
+}
