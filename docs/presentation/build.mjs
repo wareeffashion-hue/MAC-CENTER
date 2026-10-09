@@ -64,6 +64,21 @@ add('light split', `
   </div>
   <div class="frame">${img('site-hero.jpg')}</div>`);
 
+// حركة الشعار
+add('dark split', `
+  <div>
+    <p class="kicker">حركة الشعار</p>
+    <h2>العربة تفتح<br><span class="soft">عالم ماك</span></h2>
+    <ol class="steps">
+      <li><b>تدخل العربة</b> بخطوط السرعة المأخوذة من الشعار نفسه</li>
+      <li><b>تتفتح ست نوافذ</b> حولها للأقسام، يرسم كل قسم خطوطه الذهبية</li>
+      <li><b>تنطوي النوافذ</b> عائدة إلى العربة، وتكتمل الكلمة بالعربية ثم الإنجليزية</li>
+      <li><b>يستقر الشعار</b> في مكانه بالترويسة برسمه الأصلي دون أي تعديل</li>
+    </ol>
+    <p class="body" style="margin-top:24px;font-size:22px">تُعرض مرة واحدة في الزيارة، ويمكن تخطيها بأي ضغطة، وإعادتها بالضغط على الشعار.</p>
+  </div>
+  <div class="frame">${img('site-intro.jpg')}</div>`);
+
 // ٥ الحركة
 add('dark', `
   <p class="kicker">الحركة</p>
@@ -273,41 +288,43 @@ const css = `
 html, body { margin: 0; background: #222; }
 body { font-family: G, sans-serif; -webkit-font-smoothing: antialiased; }
 .slide { position: relative; width: 1920px; height: 1080px; overflow: hidden; padding: 110px 130px 120px; page-break-after: always; break-after: page; background: #F7F4EC; color: #0F2219; }
-.slide.dark { background: #084832; color: #F7F4EC; }
-.slide.dark::before { content: ""; position: absolute; left: -10%; top: 30%; width: 900px; height: 1300px; border: 1px solid rgba(247,244,236,.05); border-radius: 999px 999px 0 0; }
+.slide.dark { background: #F8F5EE; color: #084832; isolation: isolate; }
+.slide.dark::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--pattern) 0 0 / 120px 160px, var(--pattern) 60px 80px / 120px 160px; opacity: .14; -webkit-mask-image: linear-gradient(to left, transparent 15%, #000 85%); mask-image: linear-gradient(to left, transparent 15%, #000 85%); }
+.slide { --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='128' viewBox='0 0 96 128'%3E%3Cg fill='none' stroke='%23006442' stroke-width='1'%3E%3Cpath d='M18 128V54a30 30 0 0 1 60 0v74'/%3E%3Cpath d='M28 128V58a20 20 0 0 1 40 0v70' stroke-opacity='.55'/%3E%3Cpath d='M48 10l3 5 5 3-5 3-3 5-3-5-5-3 5-3z' fill='%23006442' fill-opacity='.5' stroke='none'/%3E%3C/g%3E%3C/svg%3E"); }
+.slide.light { background: #FFFFFF; }
 h1, h2, h3 { margin: 0; font-weight: 700; line-height: 1.15; }
 h1 { font-size: 140px; line-height: 1.12; }
 h2 { font-size: 86px; margin-bottom: 56px; }
 h3 { font-size: 34px; margin-bottom: 12px; }
 p { margin: 0; }
-.gold { color: #FFBA1D; }
+.gold { color: #0C714F; }
 .light { font-weight: 300; }
 .soft { font-weight: 300; color: #75847B; }
-.dark .soft { color: rgba(247,244,236,.6); }
+.dark .soft { color: #0C714F; }
 .kicker { display: flex; align-items: center; gap: 18px; font-size: 24px; font-weight: 700; color: #75847B; margin-bottom: 26px; }
 .kicker::before { content: ""; width: 40px; height: 1px; background: currentColor; }
-.dark .kicker { color: rgba(247,244,236,.6); }
+.dark .kicker { color: #75847B; }
 .n { font-size: 22px; font-weight: 700; color: #FFAE00; }
-.dark .n { color: #FFBA1D; }
+.dark .n { color: #FFAE00; }
 .body { font-size: 30px; line-height: 1.7; color: #4B5C53; max-width: 26em; margin-bottom: 36px; }
 .statement { font-size: 66px; line-height: 1.5; font-weight: 300; max-width: 22em; margin-bottom: 80px; }
 .statement b { font-weight: 700; }
-.note { position: absolute; inset-inline: 130px; bottom: 120px; font-size: 22px; color: rgba(247,244,236,.65); padding-top: 18px; border-top: 1px solid rgba(247,244,236,.16); }
+.note { position: absolute; inset-inline: 130px; bottom: 120px; font-size: 22px; color: #4B5C53; padding-top: 18px; border-top: 1px solid rgba(15,34,25,.14); }
 .note.dark-note { color: #4B5C53; border-color: rgba(15,34,25,.14); }
 .foot { position: absolute; inset-inline: 130px; bottom: 44px; display: flex; justify-content: space-between; font-size: 18px; color: #75847B; }
-.dark .foot { color: rgba(247,244,236,.5); }
+.dark .foot { color: #75847B; }
 .foot .logo { height: 34px; width: auto; }
 .split .foot { top: 52px; bottom: auto; }
 .split .foot > span:first-child { visibility: hidden; }
 .logo .mc-cart { fill: #FFBA1D; }
 .logo .mc-word { fill: #006442; }
-.dark .logo .mc-word { fill: #F7F4EC; }
+
 
 /* الغلاف */
 .cover { display: grid; grid-template-columns: 1.25fr .75fr; align-items: end; gap: 120px; padding-bottom: 130px; }
 .cover-logo .logo { height: 96px; width: auto; margin-bottom: 120px; }
-.cover .lead { font-size: 30px; color: rgba(247,244,236,.75); margin: 50px 0 28px; }
-.cover .meta { font-size: 22px; color: rgba(247,244,236,.5); padding-top: 22px; border-top: 1px solid rgba(247,244,236,.16); display: inline-block; }
+.cover .lead { font-size: 30px; color: #4B5C53; margin: 50px 0 28px; }
+.cover .meta { font-size: 22px; color: #75847B; padding-top: 22px; border-top: 1px solid rgba(15,34,25,.14); display: inline-block; }
 .cover-arch { height: 780px; }
 .cover-arch .arch { height: 100%; aspect-ratio: auto; }
 .arch { position: relative; display: block; width: 100%; aspect-ratio: 3/4; border-radius: 999px 999px 0 0; overflow: hidden; background: radial-gradient(120% 70% at 50% 30%, #0E5A3F 0%, #084832 55%, #063A28 100%); box-shadow: 0 0 0 1px rgba(247,244,236,.06); }
@@ -320,13 +337,13 @@ p { margin: 0; }
 
 /* أعمدة */
 .cols4 { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid rgba(15,34,25,.14); margin-top: 30px; }
-.cols4.on-dark { border-color: rgba(247,244,236,.16); }
+
 .cols4 .c { padding: 34px 36px 0 0; padding-inline: 0 36px; border-inline-start: 1px solid rgba(15,34,25,.14); padding-inline-start: 36px; }
-.cols4.on-dark .c { border-color: rgba(247,244,236,.16); }
+
 .cols4 .c:first-child { border: 0; padding-inline-start: 0; }
 .cols4 .n { display: block; margin-bottom: 70px; }
 .cols4 p { font-size: 26px; line-height: 1.65; color: #4B5C53; }
-.on-dark p { color: rgba(247,244,236,.7); }
+.on-dark p { color: #4B5C53; }
 .cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 60px; }
 .split { display: grid; grid-template-columns: .9fr 1.1fr; gap: 90px; align-items: center; padding-top: 120px; padding-bottom: 80px; }
 .split h2 { font-size: 66px; margin-bottom: 28px; }
@@ -337,7 +354,7 @@ p { margin: 0; }
 .split.even { grid-template-columns: 1fr 1fr; align-items: center; }
 .split.wide { grid-template-columns: .75fr 1.25fr; }
 .frame { position: relative; box-shadow: 0 40px 80px -30px rgba(6,58,40,.45), 0 0 0 1px rgba(15,34,25,.08); background: #fff; }
-.dark .frame { box-shadow: 0 40px 80px -30px rgba(0,0,0,.6), 0 0 0 1px rgba(247,244,236,.12); }
+
 .shot { display: block; width: 100%; height: auto; }
 .stack { position: relative; height: 620px; }
 .stack .frame { position: absolute; width: 74%; right: 0; top: 0; }
@@ -345,11 +362,11 @@ p { margin: 0; }
 .ticks { list-style: none; padding: 0; margin: 0; display: grid; gap: 0; }
 .ticks li { position: relative; padding: 15px 0; padding-inline-start: 44px; font-size: 25px; line-height: 1.55; border-bottom: 1px solid rgba(15,34,25,.12); }
 .ticks li::before { content: ""; position: absolute; inset-inline-start: 4px; top: 32px; width: 20px; height: 1px; background: #FFAE00; }
-.ticks.on-dark li, .dark .ticks li { border-color: rgba(247,244,236,.14); }
+
 .sw { display: inline-block; width: 24px; height: 24px; vertical-align: middle; margin: 0 3px; border: 1px solid rgba(0,0,0,.08); }
 .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 60px; }
 .grid3 h3 { margin-top: 36px; font-size: 32px; }
-.grid3 p { font-size: 24px; line-height: 1.6; color: rgba(247,244,236,.7); }
+.grid3 p { font-size: 24px; line-height: 1.6; color: #4B5C53; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; }
 
 /* الرحلة */
@@ -363,19 +380,19 @@ p { margin: 0; }
 .p-img { display: block; width: 100%; border-radius: 30px; }
 
 /* القواعد */
-.rules { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid rgba(247,244,236,.16); }
-.rules .r { padding: 18px 0; padding-inline-end: 40px; border-bottom: 1px solid rgba(247,244,236,.16); }
+.rules { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid rgba(15,34,25,.14); }
+.rules .r { padding: 18px 0; padding-inline-end: 40px; border-bottom: 1px solid rgba(15,34,25,.14); }
 .rules b { display: block; font-size: 28px; margin: 6px 0 4px; }
-.rules p { font-size: 21px; line-height: 1.55; color: rgba(247,244,236,.7); }
+.rules p { font-size: 21px; line-height: 1.55; color: #4B5C53; }
 .steps { list-style: none; padding: 0; margin: 0; counter-reset: s; border-top: 1px solid rgba(15,34,25,.14); }
 .steps li { padding: 22px 0; border-bottom: 1px solid rgba(15,34,25,.14); font-size: 26px; line-height: 1.55; color: #4B5C53; }
 .steps b { color: #0F2219; }
 
 .tbl { width: 100%; border-collapse: collapse; font-size: 28px; }
-.tbl th { text-align: start; font-size: 22px; color: rgba(247,244,236,.55); font-weight: 400; padding: 0 0 18px; border-bottom: 1px solid rgba(247,244,236,.3); }
-.tbl td { padding: 24px 0; border-bottom: 1px solid rgba(247,244,236,.14); vertical-align: top; }
+.tbl th { text-align: start; font-size: 22px; color: #75847B; font-weight: 400; padding: 0 0 18px; border-bottom: 1px solid rgba(15,34,25,.25); }
+.tbl td { padding: 24px 0; border-bottom: 1px solid rgba(15,34,25,.12); vertical-align: top; }
 .tbl td:first-child { width: 40%; font-weight: 700; padding-inline-end: 40px; }
-.tbl td:last-child { color: rgba(247,244,236,.8); }
+.tbl td:last-child { color: #4B5C53; }
 
 .list2 { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr 1fr; border-top: 1px solid rgba(15,34,25,.14); }
 .list2 li { padding: 7px 0; font-size: 20px; border-bottom: 1px solid rgba(15,34,25,.1); }
@@ -394,8 +411,8 @@ p { margin: 0; }
 .timeline b { display: block; font-size: 34px; margin: 18px 0 12px; }
 .timeline p { font-size: 24px; line-height: 1.55; color: #4B5C53; }
 
-.decisions { list-style: none; padding: 0; margin: 0; border-top: 1px solid rgba(247,244,236,.16); }
-.decisions li { display: grid; grid-template-columns: 90px 1fr; align-items: baseline; padding: 28px 0; border-bottom: 1px solid rgba(247,244,236,.16); font-size: 38px; }
+.decisions { list-style: none; padding: 0; margin: 0; border-top: 1px solid rgba(15,34,25,.14); }
+.decisions li { display: grid; grid-template-columns: 90px 1fr; align-items: baseline; padding: 28px 0; border-bottom: 1px solid rgba(15,34,25,.14); font-size: 38px; }
 `;
 
 const html = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>ماك سنتر · المنصة الرقمية</title><style>${css}</style></head><body>

@@ -25,6 +25,102 @@
   addEventListener('scroll', () => requestAnimationFrame(onScroll), { passive: true });
   onScroll();
 
+  // ——— «العربة تفتح عالم ماك»: افتتاحية الشعار ———
+  // تدخل العربة بخطوط السرعة، تتفتح ست نوافذ للأقسام ثم تنطوي فيها، وتكتمل الكلمة،
+  // ثم يطير الشعار إلى مكانه في الترويسة. يُتخطى بأي ضغطة، ويعاد بالضغط على الشعار.
+  const intro = $('[data-intro]');
+  const OUT = 'cubic-bezier(.16, 1, .3, 1)', INOUT = 'cubic-bezier(.7, 0, .2, 1)';
+  let introAnims = [], introPlaying = false;
+  function finishIntro() {
+    if (!intro) return;
+    introPlaying = false;
+    intro.hidden = true;
+    intro.classList.remove('js-run');
+    introAnims.forEach((a) => a.cancel());
+    introAnims = [];
+    document.body.style.overflow = '';
+    if (document.body.classList.contains('has-intro')) document.body.classList.remove('has-intro');
+    document.dispatchEvent(new Event('intro:done'));
+  }
+  function skipIntro() { if (introPlaying) introAnims.forEach((a) => { try { a.finish(); } catch { /* */ } }); }
+  function playIntro() {
+    if (!intro || introPlaying) return;
+    if (reduce || !Element.prototype.animate) { finishIntro(); return; }
+    introPlaying = true;
+    intro.hidden = false;
+    intro.classList.add('js-run');
+    document.body.style.overflow = 'hidden';
+    // للمراحل المتعددة: التسارع لكل مقطع، والزمن الكلي خطي حتى تبقى نقاط التوقف في مواضعها
+    const A = (el, kf, o = {}) => {
+      const multi = kf.length > 2;
+      const frames = multi ? kf.map((f) => ({ easing: o.easing || OUT, ...f })) : kf;
+      const a = el.animate(frames, { fill: 'both', ...o, easing: multi ? 'linear' : (o.easing || OUT) });
+      introAnims.push(a);
+      return a;
+    };
+    const stage = $('.intro-stage', intro), box = $('.intro-logo', intro), svg = $('svg', box);
+    const body = $('.mc-body', svg), wheels = $$('.mc-wh', svg), lines = $$('.mc-sp', svg);
+    const ar = $$('.mc-ar', svg), la = $$('.mc-la', svg), wins = $$('.intro-win', intro);
+    const vb = svg.viewBox.baseVal, W = box.offsetWidth, ppu = W / vb.width;
+    const br = body.getBoundingClientRect(), lr = box.getBoundingClientRect();
+    const shift = lr.left + lr.width / 2 - (br.left + br.width / 2);
+    const away = -(innerWidth / 2 + W) / ppu;
+    const rect = box.getBoundingClientRect();
+    const target = $('.brand .logo')?.getBoundingClientRect();
+
+    // ١ العربة تدخل وخطوط السرعة ممتدة خلفها
+    A(box, [{ transform: `translateX(${shift}px)` }, { transform: `translateX(${shift}px)`, offset: 0.78, easing: INOUT }, { transform: 'none' }], { duration: 3150 });
+    [body, ...wheels].forEach((el) => A(el, [{ transform: `translateX(${away}px)` }, { transform: 'translateX(14px) scaleX(.95)', offset: 0.8 }, { transform: 'none' }], { duration: 950, delay: 150 }));
+    lines.forEach((el, i) => A(el, [{ transform: `translateX(${away * 1.1}px) scaleX(7)`, opacity: 0 }, { opacity: 1, offset: 0.25 }, { transform: 'translateX(0) scaleX(2.2)', offset: 0.78 }, { transform: 'none', opacity: 1 }], { duration: 1050, delay: 130 + i * 50 }));
+    lines.forEach((el, i) => A(el, [{ opacity: 1 }, { opacity: 0.3 }, { opacity: 1 }], { duration: 260, delay: 1150 + i * 90, iterations: 2, easing: 'linear', fill: 'none' }));
+
+    // النوافذ تتبع العربة حين تنزاح لتفسح للكلمة
+    A($('.intro-wins', intro), [{ transform: 'none' }, { transform: 'none', offset: 0.78, easing: INOUT }, { transform: `translateX(${-shift}px)` }], { duration: 3150 });
+    // ٢ النوافذ الست تتفتح حول العربة ثم تنطوي عائدة إليها
+    const rx = Math.min(innerWidth * (innerWidth < 600 ? 0.3 : 0.36), 470), ry = Math.min(innerHeight * 0.33, 300);
+    wins.forEach((w, k) => {
+      const ang = (-90 + k * 60) * Math.PI / 180;
+      const x = Math.cos(ang) * rx, y = Math.sin(ang) * ry;
+      A(w, [
+        { transform: 'translate(0, 0) scale(.15)', opacity: 0 },
+        { transform: `translate(${x}px, ${y}px) scale(1)`, opacity: 1, offset: 0.26, easing: INOUT },
+        { transform: `translate(${x * 1.03}px, ${y * 1.03}px) scale(1)`, opacity: 1, offset: 0.7, easing: INOUT },
+        { transform: 'translate(0, 0) scale(.1) rotate(-8deg)', opacity: 0 },
+      ], { duration: 1900, delay: 900 + k * 55, easing: OUT });
+      $$('path', w).forEach((p, j) => A(p, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 650, delay: 1100 + k * 55 + j * 50 }));
+    });
+    // العربة تلتقط النوافذ العائدة
+    [body, ...wheels].forEach((el) => A(el, [{ transform: 'scale(1)' }, { transform: 'scale(1.09)' }, { transform: 'scale(1)' }], { duration: 420, delay: 2650, composite: 'add', fill: 'none' }));
+
+    // ٣ تكتمل الكلمة بالعربية ثم اللاتينية
+    ar.forEach((el, i) => A(el, [{ opacity: 0, transform: 'translateY(22px)' }, { opacity: 1, transform: 'none' }], { duration: 650, delay: 2500 + i * 45 }));
+    la.forEach((el, i) => A(el, [{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }], { duration: 550, delay: 2800 + i * 35 }));
+
+    // ٤ يستقر الشعار في الترويسة وترتفع الستارة
+    if (target && target.width) {
+      const s = target.width / rect.width;
+      stage.style.transformOrigin = `${rect.left}px ${rect.top}px`;
+      A(stage, [{ transform: 'none' }, { transform: `translate(${target.left - rect.left}px, ${target.top - rect.top}px) scale(${s})` }], { duration: 850, delay: 3450, easing: INOUT });
+    }
+    const end = A($('.intro-bg', intro), [{ clipPath: 'inset(0 0 0 0)' }, { clipPath: 'inset(0 0 100% 0)' }], { duration: 850, delay: 3450, easing: INOUT });
+    A($('.intro-skip', intro), [{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay: 3300 });
+    end.finished.then(finishIntro, () => {});
+  }
+  if (intro) {
+    intro.addEventListener('click', skipIntro);
+    addEventListener('keydown', (e) => { if (introPlaying && ['Escape', 'Enter', ' '].includes(e.key)) { e.preventDefault(); skipIntro(); } });
+    if (intro.hasAttribute('data-autoplay')) playIntro();
+    // إعادة التجربة بالضغط على الشعار في الرئيسية
+    $('.brand')?.addEventListener('click', (e) => {
+      if (location.pathname !== '/' || e.metaKey || e.ctrlKey) return;
+      e.preventDefault();
+      scrollTo({ top: 0, behavior: 'instant' });
+      playIntro();
+    });
+  }
+  // نبضة العجلات عند الضغط على الشعار في أي صفحة
+  $$('.brand').forEach((b) => b.addEventListener('pointerdown', () => { b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }));
+
   // ——— القائمة الكاملة ———
   const menuBtn = $('[data-menu]');
   const menu = $('[data-menu-panel]');
@@ -87,7 +183,8 @@
       cur = n;
     };
     const first = $('.lineart', items[0]);
-    setTimeout(() => first?.classList.add('drawn'), document.body.classList.contains('has-intro') ? 1500 : 450);
+    if (document.body.classList.contains('has-intro')) document.addEventListener('intro:done', () => setTimeout(() => first?.classList.add('drawn'), 450), { once: true });
+    else setTimeout(() => first?.classList.add('drawn'), 450);
     btns.forEach((b, i) => b.addEventListener('click', () => { show(i); restart(); }));
     const tick = () => { if (!paused && !document.hidden) show((cur + 1) % items.length); };
     const restart = () => { clearInterval(timer); if (!reduce) timer = setInterval(tick, 4800); };

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { esc } from '../http.js';
 import { config } from '../config.js';
 import { icon } from './icons.js';
+import { arch } from './art.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public');
 const version = (file) => {
@@ -29,6 +30,18 @@ export const NAV = [
   ['/#services', 'خدمة العملاء'],
   ['/feedback', 'ملاحظاتك'],
 ];
+
+// «العربة تفتح عالم ماك»: الشعار الأصلي نفسه، ونوافذ الأقسام الست حوله
+function introMarkup({ autoplay, sections = [] }) {
+  return `<div class="intro" data-intro ${autoplay ? 'data-autoplay' : 'hidden'} aria-hidden="true">
+  <div class="intro-bg"></div>
+  <div class="intro-stage">
+    <div class="intro-wins">${sections.slice(0, 6).map((s, i) => `<figure class="intro-win" style="--k:${i}">${arch(s.art, { draw: true })}<figcaption>${esc(s.name.length > 16 ? s.name.split(' ')[0] : s.name)}</figcaption></figure>`).join('')}</div>
+    <div class="intro-logo">${LOGO_H}</div>
+  </div>
+  <button type="button" class="intro-skip" data-intro-skip tabindex="-1">تخطَّ</button>
+</div>`;
+}
 
 export const AR_NUM = (n) => String(n).padStart(2, '0').replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
 
@@ -66,8 +79,8 @@ export function layout({ title, description, path = '/', body, jsonLd, bodyClass
 <script src="/js/site.js?v=${ASSET_V.js}" defer></script>
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, '\\u003c')}</script>` : ''}
 </head>
-<body class="${bodyClass}${dark ? ' on-dark' : ''}${intro ? ' has-intro' : ''}">
-${intro ? `<div class="intro" aria-hidden="true"><div class="intro-mark">${CART()}</div><div class="intro-word">${LOGO_H}</div></div>` : ''}
+<body class="${bodyClass}${dark ? ' on-dark' : ''}${intro?.autoplay ? ' has-intro' : ''}">
+${intro ? introMarkup(intro) : ''}
 <a class="skip" href="#main">تخطَّ إلى المحتوى</a>
 <header class="hdr" data-hdr>
   <a href="/" class="brand" aria-label="ماك سنتر، الصفحة الرئيسية">${LOGO_H}</a>

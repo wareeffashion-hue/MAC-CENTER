@@ -170,7 +170,7 @@ export function homePage({ site, branches, sections, offers, faqs, reviews, intr
   };
 
   return layout({
-    path: '/', site, branches, jsonLd, intro, dark: true,
+    path: '/', site, branches, jsonLd, intro: { autoplay: intro, sections },
     body: hero + about + departments + offersHtml + branchesHtml + servicesHtml + reviewsHtml + faqHtml + contactDialog(branches),
     bodyClass: 'home',
   });
@@ -280,7 +280,7 @@ ${pageHead({ crumbs: [['/#branches', 'الفروع']], title: esc(b.name), lead:
 ${offers.length ? `<section class="offers-s">${head(1, 'عروض الفرع')}<div class="offer-list">${offers.map((o, i) => offerRow(o, i, branches, sections)).join('')}</div></section>` : ''}
 ${contactDialog(branches)}`;
   return layout({
-    title: b.name, path: `/branches/${b.slug}`, site, branches, dark: true,
+    title: b.name, path: `/branches/${b.slug}`, site, branches,
     description: `${b.name} في المدينة المنورة: الموقع ورقم التواصل ${b.phone} والدوام والأقسام والخدمات والعروض الحالية.`,
     jsonLd: { '@context': 'https://schema.org', ...branchLd(b) }, body, bodyClass: 'page-branch',
   });
@@ -293,7 +293,7 @@ export function offersPage({ site, branches, sections, offers }) {
   <section class="offers-s">
     ${offers.length ? `<div class="offer-list">${offers.map((o, i) => offerRow(o, i, branches, sections)).join('')}</div>` : `<div class="offers-empty"><p class="big-quote">لا توجد عروض سارية الآن. <span>العرض القادم يصل لمشتركينا أولًا.</span></p><a class="btn" href="/subscribe"><span>اشترك في العروض</span><i aria-hidden="true"></i></a></div>`}
   </section>${contactDialog(branches)}`;
-  return layout({ title: 'العروض', path: '/offers', site, branches, body, dark: true });
+  return layout({ title: 'العروض', path: '/offers', site, branches, body });
 }
 
 export function offerPage({ site, offer: o, branches, sections }) {
@@ -313,7 +313,7 @@ ${pageHead({ crumbs: [['/offers', 'العروض']], title: esc(o.title), lead: e
   <p class="label">استفسر عن العرض</p>
   <ul class="sheet-list wide">${bs.map((b) => `<li><span><b>${esc(b.name)}</b>${status(b)}</span>${linkArrow(esc(waLink(b.whatsapp, inquiryText(b, { offer: o }))), 'واتساب', `target="_blank" rel="noopener" data-track="whatsapp_click" data-branch="${b.id}"`)}</li>`).join('')}</ul>
 </section>${contactDialog(branches)}`;
-  return layout({ title: o.title, path: `/offers/${o.slug}`, site, branches, description: o.summary || o.title, body, dark: true });
+  return layout({ title: o.title, path: `/offers/${o.slug}`, site, branches, description: o.summary || o.title, body });
 }
 
 // ———————————————————— الاشتراك ————————————————————
@@ -471,7 +471,7 @@ export function privacyPage({ site, branches }) {
   <h2>الاحتفاظ</h2><p>نحتفظ بالبيانات للمدة اللازمة للغرض الذي جمعت له وفق المدد التي تعتمدها الإدارة. محتوى تقييمات Google يخزن مؤقتًا بما لا يتجاوز 30 يومًا وفق شروط Google.</p>
   <h2>حقوقك</h2><p>لك حق الاطلاع على بياناتك وتصحيحها وطلب حذفها وسحب موافقتك، بالتواصل مع خدمة عملاء أي فرع.</p>
   </section>`;
-  return layout({ title: 'سياسة الخصوصية', path: '/privacy', site, branches, body, dark: true });
+  return layout({ title: 'سياسة الخصوصية', path: '/privacy', site, branches, body });
 }
 
 export function notFoundPage({ site, branches }) {
