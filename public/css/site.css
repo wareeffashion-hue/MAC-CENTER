@@ -569,6 +569,7 @@ input[type="file"]::file-selector-button { margin-inline-end: 16px; padding: 10p
   .svc-i:nth-child(n+3) { border-top: 1px solid var(--hair); }
 }
 @media (max-width: 900px) {
+  .hero::before { background-position: left -34vw bottom -6vh; background-size: 82vw auto; opacity: .16; }
   :root { --hdr: 68px; }
   body { font-size: 17px; }
   .hdr-cta { display: none; }
