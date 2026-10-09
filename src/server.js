@@ -1,5 +1,7 @@
 import { createServer } from 'node:http';
 import { join, dirname } from 'node:path';
+import { resume as resumeWaQr, setInboundHandler } from './modules/waqr.js';
+import { handleInbound } from './modules/whatsapp.js';
 import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { openDb } from './db.js';
@@ -74,6 +76,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const server = createServer(createApp(db));
   server.listen(config.port, () => console.log(`ماك سنتر يعمل على ${config.publicUrl} (المنفذ ${config.port})`));
   startJobs(db);
+  setInboundHandler((m) => handleInbound(db, m));
+  resumeWaQr();
   const stop = () => { server.close(); db.close(); process.exit(0); };
   process.on('SIGTERM', stop);
   process.on('SIGINT', stop);

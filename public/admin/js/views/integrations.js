@@ -17,6 +17,7 @@ export async function render(view, ctx) {
       <div class="card-b">${row('Google Business Profile')}<dl class="kv" style="margin-top:12px"><dt>التفويض</dt><dd>${d.google.configured ? '<span class="badge g">OAuth مضاف</span>' : '<span class="badge y">غير مضاف</span>'}</dd><dt>الحساب</dt><dd><span class="ltr">${esc(d.google.accountId || '—')}</span></dd></dl>
       <p class="muted small">اربط كل فرع بمعرف موقعه من صفحة «الفروع». المزامنة كل 15 دقيقة، ونصوص التقييمات لا تحفظ أكثر من 30 يومًا.</p></div></section>
   </div>
+  <section class="card" style="margin-top:16px" data-waqr></section>
   <section class="card" style="margin-top:16px"><div class="card-h"><h3>${ic('inbox')} أحداث الربط الواردة</h3></div><div class="card-b">
     ${d.webhooks.length ? d.webhooks.map((w) => `<div class="status-row"><span class="led ${w.errors ? 'off' : ''}"></span><span class="grow"><b>${esc(w.provider)}</b> · ${w.total} حدث · ${w.pending || 0} بانتظار المعالجة · ${w.errors || 0} أخطاء</span><span class="muted small">${ago(w.last)}</span></div>`).join('') : '<p class="muted" style="margin:0">لم تصل أحداث بعد.</p>'}
   </div></section>
@@ -37,6 +38,63 @@ export async function render(view, ctx) {
     <label class="field"><span>النجوم</span><select name="rating">${[5, 4, 3, 2, 1].map((n) => `<option>${n}</option>`).join('')}</select></label>
     <label class="field" style="grid-column:span 2"><span>النص</span><input name="text" value="تجربة ممتازة والموظفين متعاونين"></label>
     <button class="btn">${ic('plus')}إضافة ومعالجة</button></form><p class="muted small">يمر التقييم بالقواعد نفسها: تصنيف، ومسودة أو رد تلقائي حسب التفعيل، وتذكرة عند الحاجة.</p></div></section>` : ''}`;
+
+  // ربط رقم واتساب بمسح QR
+  const qrBox = view.querySelector('[data-waqr]');
+  let poll = null;
+  const drawQr = (q) => {
+    const L = { off: ['y', 'غير مربوط'], connecting: ['y', 'جارٍ الاتصال'], qr: ['y', 'بانتظار المسح'], open: ['g', 'واتساب مربوط'], error: ['r', 'خطأ'] };
+    const [cls, label] = L[q.status] || L.off;
+    const S = q.settings || {};
+    const role = d.whatsapp.driver === 'qr' ? 'يرسل هذا الرقم كل رسائل الموقع: تأكيد الاشتراك والترحيب والعروض، والتنبيهات والملخص اليومي.' : 'يرسل هذا الرقم التنبيهات والملخص اليومي. لجعله يرسل رسائل العملاء والعروض أيضًا اضبط WHATSAPP_DRIVER=qr على الخادم.';
+    qrBox.innerHTML = `<div class="card-h"><h3>${ic('phone')} إشعارات واتساب</h3><div class="right"><span class="badge ${cls}">${label}</span></div></div>
+      <div class="card-b">
+        ${q.status === 'open' ? `<div class="bar" style="margin:0 0 6px"><span class="grow">الرسائل تُرسل من الرقم <b class="ltr">+${esc(q.me || '')}</b> · ${q.sent} رسالة منذ آخر تشغيل</span><button class="btn ghost" data-qout>فصل الحساب</button></div>
+          <p class="muted small" style="margin:0 0 14px">${role}</p>`
+        : q.status === 'qr' && q.qr ? `<div style="display:grid;grid-template-columns:minmax(0,240px) 1fr;gap:20px;align-items:center;margin-bottom:16px">
+            <div style="background:#fff;padding:8px;border-radius:10px;border:1px solid var(--line)">${q.qr}</div>
+            <ol class="small" style="margin:0;padding-inline-start:18px;line-height:2">
+              <li>افتح واتساب للأعمال على جوال رقم ماك سنتر.</li>
+              <li>من <b>الإعدادات</b> اختر <b>الأجهزة المرتبطة</b> ثم <b>ربط جهاز</b>.</li>
+              <li>وجّه الكاميرا إلى الرمز. يتجدد الرمز تلقائيًا كل نحو 20 ثانية.</li>
+            </ol></div>`
+        : `<p class="muted small" style="margin-top:0">اربط رقم ماك سنتر بمسح رمز QR من تطبيق واتساب، كما في واتساب ويب. ${role}</p>
+          <p class="small" style="color:var(--warn);background:var(--warn-bg);padding:10px 12px;border-radius:8px">الربط بمسح QR ليس من واجهات واتساب الرسمية، والإرسال الجماعي منه قد يعرّض الرقم للحظر. الموقع يرسل رسالة كل ثانيتين تقريبًا ويلتزم بسقف الحملات الأسبوعي، لكن الخطر يبقى قائمًا.</p>
+          ${q.error ? `<p class="small" style="color:var(--red)">${esc(q.error)}</p>` : ''}
+          <button class="btn" data-qstart style="margin-bottom:16px" ${q.status === 'connecting' ? 'disabled' : ''}>${ic('plus', 16)}${q.status === 'connecting' ? 'جارٍ تجهيز الرمز…' : 'ربط رقم بمسح QR'}</button>`}
+        <form class="form" data-qset>
+          <div class="form-row" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+            <label class="field"><span>جوال المدير (تصله التنبيهات والملخص)</span><input name="managerPhone" dir="ltr" placeholder="9665xxxxxxxx" value="${esc(S.managerPhone || '')}"></label>
+            <label class="field"><span>وقت الملخص اليومي</span><input name="summaryTime" type="time" value="${esc(S.summaryTime || '21:30')}"></label>
+            <label class="field"><span>رابط النظام (يظهر أسفل الرسائل)</span><input name="link" dir="ltr" value="${esc(S.link || '')}"></label>
+            <label class="field"><span>تنبيهات الفريق</span><select name="alerts"><option value="1" ${S.alerts !== false ? 'selected' : ''}>مفعّلة</option><option value="0" ${S.alerts === false ? 'selected' : ''}>متوقفة</option></select></label>
+          </div>
+          <div class="bar" style="margin:0"><button class="btn">${ic('check', 16)}حفظ</button>
+            ${q.status === 'open' ? `<button type="button" class="btn sec" data-qsum>${ic('send', 16)}أرسل الملخص الآن</button><button type="button" class="btn ghost" data-qtest>رسالة تجريبية لي</button>` : ''}</div>
+        </form>
+      </div>`;
+    qrBox.querySelector('[data-qstart]')?.addEventListener('click', async (e) => { const r = await run(e.currentTarget, () => api('/waqr/start', { method: 'POST' })); drawQr({ ...r, settings: S }); watch(); });
+    qrBox.querySelector('[data-qout]')?.addEventListener('click', async (e) => { if (!confirm('فصل الحساب؟ ستتوقف رسائل واتساب المرسلة منه.')) return; const r = await run(e.currentTarget, () => api('/waqr/logout', { method: 'POST' }), { ok: 'فُصل الحساب' }); drawQr({ ...r, settings: S }); });
+    qrBox.querySelector('[data-qtest]')?.addEventListener('click', (e) => run(e.currentTarget, () => api('/waqr/test', { method: 'POST' }), { ok: 'أرسلت الرسالة' }));
+    qrBox.querySelector('[data-qsum]')?.addEventListener('click', (e) => run(e.currentTarget, () => api('/waqr/summary', { method: 'POST' }), { ok: 'أرسل الملخص' }));
+    const f = qrBox.querySelector('[data-qset]');
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const saved = await run(f.querySelector('button'), () => api('/waqr/settings', { method: 'PUT', body: { managerPhone: f.managerPhone.value, summaryTime: f.summaryTime.value, link: f.link.value, alerts: f.alerts.value === '1' } }), { ok: 'حُفظت الإعدادات', form: f });
+      q.settings = saved;
+    });
+  };
+  const watch = () => {
+    clearInterval(poll);
+    poll = setInterval(async () => {
+      if (!qrBox.isConnected) return clearInterval(poll);
+      const q = await api('/waqr').catch(() => null);
+      if (!q) return;
+      drawQr(q);
+      if (q.status === 'open' || q.status === 'off' || q.status === 'error') clearInterval(poll);
+    }, 3000);
+  };
+  api('/waqr').then((q) => { drawQr(q); if (q.status === 'qr' || q.status === 'connecting') watch(); });
 
   view.querySelector('[data-check]').onclick = async (e) => { await run(e.currentTarget, () => api('/integrations/check', { method: 'POST' }), { ok: 'تم الفحص' }); render(view, ctx); };
   const outbox = view.querySelector('#outbox');

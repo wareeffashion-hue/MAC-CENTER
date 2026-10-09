@@ -7,7 +7,7 @@ import { HttpError, parseRequest, sendHtml, sendJson, redirect, rateLimit, clien
 import { listBranches, listSections, listFaqs, siteSettings, getBranch } from '../modules/catalog.js';
 import { listOffers, getOffer } from '../modules/offers.js';
 import { featuredReviews } from '../modules/reviews.js';
-import { startSubscription, intentStatus, verifySignature, handleWebhook, updatePreferences, stopSubscription } from '../modules/whatsapp.js';
+import { startSubscription, intentStatus, verifySignature, handleWebhook, updatePreferences, stopSubscription, sendingNumber } from '../modules/whatsapp.js';
 import { createTicket, publicTicket } from '../modules/tickets.js';
 import { resolveQr } from '../modules/qrcodes.js';
 import { trackEvent } from '../modules/events.js';
@@ -79,7 +79,7 @@ export function publicRoutes(router, db) {
       const s = db.prepare(`SELECT name FROM sections WHERE id IN (${r.sections.map(() => '?').join(',')})`).all(...r.sections);
       const text = ['أرغب في الاشتراك بعروض ماك سنتر', `الفروع: ${b.map((x) => x.name).join('، ')}`, `الأقسام: ${s.map((x) => x.name).join('، ')}`,
         intent.name ? `الاسم: ${intent.name}` : null, 'أوافق على استقبال عروض ماك سنتر والفروع التي اخترتها عبر واتساب، ويمكنني إيقاف الاشتراك في أي وقت.', `رمز الربط: MC-${intent.token}`].filter(Boolean).join('\n');
-      waUrl = `https://wa.me/${config.whatsapp.phone}?text=${encodeURIComponent(text)}`;
+      waUrl = `https://wa.me/${sendingNumber()}?text=${encodeURIComponent(text)}`;
     }
     html(res, P.subscribeStatusPage({ ...common(), statusKey: req.params.key, status, waUrl }));
   });

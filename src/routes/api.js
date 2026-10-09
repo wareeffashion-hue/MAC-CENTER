@@ -13,6 +13,8 @@ import * as R from '../modules/reviews.js';
 import * as Q from '../modules/qrcodes.js';
 import * as U from '../modules/users.js';
 import * as W from '../modules/whatsapp.js';
+import * as WQ from '../modules/waqr.js';
+import * as N from '../modules/notify.js';
 import * as Rep from '../modules/reports.js';
 import { EVENT_NAMES } from '../modules/events.js';
 
@@ -373,7 +375,7 @@ export function apiRoutes(router, db) {
   router.get('/api/integrations', auth('integrations'), (req, res) => {
     ok(res, {
       status: db.prepare('SELECT * FROM integration_status').all(),
-      whatsapp: { driver: config.whatsapp.driver, phone: config.whatsapp.phone, webhook: `${config.publicUrl}/api/webhooks/whatsapp`, configured: !!(config.whatsapp.token && config.whatsapp.phoneNumberId), signed: !!config.whatsapp.appSecret },
+      whatsapp: { driver: config.whatsapp.driver, phone: W.sendingNumber(), webhook: `${config.publicUrl}/api/webhooks/whatsapp`, configured: !!(config.whatsapp.token && config.whatsapp.phoneNumberId), signed: !!config.whatsapp.appSecret },
       google: { driver: config.google.driver, configured: !!(config.google.clientId && config.google.refreshToken), accountId: config.google.accountId || null },
       webhooks: db.prepare('SELECT provider, COUNT(*) total, SUM(processed_at IS NULL) pending, SUM(error IS NOT NULL) errors, MAX(received_at) last FROM webhook_events GROUP BY provider').all(),
     });
@@ -383,6 +385,35 @@ export function apiRoutes(router, db) {
     db.prepare(`INSERT INTO integration_status (name, ok, message) VALUES ('WhatsApp Business', ?, ?) ON CONFLICT(name) DO UPDATE SET ok=excluded.ok, message=excluded.message, checked_at=datetime('now')`).run(w.ok ? 1 : 0, w.message);
     const g = await R.googleDriver().health();
     db.prepare(`INSERT INTO integration_status (name, ok, message) VALUES ('Google Business Profile', ?, ?) ON CONFLICT(name) DO UPDATE SET ok=excluded.ok, message=excluded.message, checked_at=datetime('now')`).run(g.ok ? 1 : 0, g.message);
+    ok(res);
+  });
+
+  // ————— رقم تنبيهات الفريق بمسح QR —————
+  router.get('/api/waqr', auth('integrations'), (req, res) => ok(res, { ...WQ.status(), settings: N.waNotifySettings(db) }));
+  router.put('/api/waqr/settings', auth('integrations'), async (req, res) => {
+    const b = await body(req);
+    const s = N.saveWaNotifySettings(db, b || {});
+    log(req, 'waqr.settings', 'integration', 'waqr', s);
+    ok(res, s);
+  });
+  router.post('/api/waqr/summary', auth('integrations'), (req, res) => {
+    const to = N.waNotifySettings(db).managerPhone || req.user.wa_phone;
+    if (!to) fail(400, 'أضف جوال المدير أولًا');
+    if (!WQ.send(to, N.dailySummaryText(db))) fail(400, 'الرقم غير مربوط');
+    ok(res);
+  });
+  router.post('/api/waqr/start', auth('integrations'), async (req, res) => {
+    const s = await WQ.start();
+    log(req, 'waqr.start', 'integration', 'waqr', {});
+    ok(res, s);
+  });
+  router.post('/api/waqr/logout', auth('integrations'), async (req, res) => {
+    log(req, 'waqr.logout', 'integration', 'waqr', {});
+    ok(res, await WQ.logout());
+  });
+  router.post('/api/waqr/test', auth('integrations'), (req, res) => {
+    if (!req.user.wa_phone) fail(400, 'أضف رقم واتساب لحسابك من «حسابي» أولًا');
+    if (!WQ.send(req.user.wa_phone, `تنبيه تجريبي من ماك سنتر ✅\nسيصلك على هذا الرقم كل تنبيه يخصك: تذكرة جديدة، أو تصعيد، أو تقييم يحتاج ردًا.`)) fail(400, 'الرقم غير مربوط');
     ok(res);
   });
 

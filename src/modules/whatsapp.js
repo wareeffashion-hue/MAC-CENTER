@@ -5,6 +5,7 @@ import { code, token, safeEqual, signedUrlToken } from '../lib/ids.js';
 import { fail } from '../http.js';
 import { CONSENT_TEXT, CONSENT_VERSION, waLink } from './catalog.js';
 import { trackEvent } from './events.js';
+import * as WQ from './waqr.js';
 
 const INTENT_TTL_MIN = 30;
 const STOP_RE = /^\s*(إيقاف|ايقاف|أوقف|اوقف|إلغاء الاشتراك|الغاء الاشتراك|stop|unsubscribe)\s*$/i;
@@ -72,6 +73,32 @@ const drivers = {
   },
 };
 
+// ناقل QR: القوالب الرسمية غير متاحة فيه، فتحول إلى نص عادي من متغيراتها
+function templateText(payload) {
+  const params = (payload.components || []).flatMap((c) => c.parameters || []).map((p) => p.text).filter(Boolean);
+  if (payload.text) return payload.text;
+  const [title, link, ...rest] = params;
+  return [title && `🛍️ ${title}`, ...rest, link && `التفاصيل: ${link}`, 'لإيقاف الرسائل أرسل: إيقاف'].filter(Boolean).join('\n');
+}
+drivers.qr = {
+  name: 'qr',
+  async send(payload) {
+    if (!WQ.isOpen()) throw new TemporaryError('رقم واتساب المربوط بـ QR غير متصل');
+    const r = WQ.send(payload.to, payload.template ? templateText(payload) : payload.text);
+    if (!r) throw new TemporaryError('رقم واتساب المربوط بـ QR غير متصل');
+    return r;
+  },
+  async health() {
+    const s = WQ.status();
+    return s.status === 'open' ? { ok: true, message: `مربوط بمسح QR: +${s.me}` } : { ok: false, message: 'اربط الرقم بمسح QR من صفحة الربط' };
+  },
+};
+
+// الرقم الذي يراسله العملاء: رقم QR المربوط حين يكون هو الناقل، وإلا WHATSAPP_PHONE_NUMBER
+export function sendingNumber() {
+  return (config.whatsapp.driver === 'qr' && WQ.linkedNumber()) || config.whatsapp.phone;
+}
+
 export function driver() {
   return drivers[config.whatsapp.driver] || drivers.mock;
 }
@@ -118,7 +145,7 @@ export function startSubscription(db, input, { publicUrl }) {
     CONSENT_TEXT,
     `رمز الربط: MC-${link}`,
   ].filter(Boolean).join('\n');
-  return { statusKey, waUrl: waLink(config.whatsapp.phone, text), statusUrl: `${publicUrl}/subscribe/status/${statusKey}`, expiresAt: expires.toISOString() };
+  return { statusKey, waUrl: waLink(sendingNumber(), text), statusUrl: `${publicUrl}/subscribe/status/${statusKey}`, expiresAt: expires.toISOString() };
 }
 
 export function intentStatus(db, statusKey) {

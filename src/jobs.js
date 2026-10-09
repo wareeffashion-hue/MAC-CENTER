@@ -2,7 +2,7 @@ import { autoCampaigns, materialize, dispatch } from './modules/offers.js';
 import { escalateLate } from './modules/tickets.js';
 import { syncReviews, purgeStaleReviewContent } from './modules/reviews.js';
 import { driver } from './modules/whatsapp.js';
-import { setIntegrationStatus } from './modules/notify.js';
+import { setIntegrationStatus, maybeSendDailySummary } from './modules/notify.js';
 import { config } from './config.js';
 
 // مهام مجدولة بسيطة؛ كل مهمة محمية من التداخل مع نفسها
@@ -28,6 +28,7 @@ export function startJobs(db) {
     }
   });
   every('escalation', 60_000, () => escalateLate(db));
+  every('wa-summary', 60_000, () => maybeSendDailySummary(db));
   every('expire-intents', 5 * 60_000, () => {
     db.prepare("UPDATE subscription_intents SET status = 'expired' WHERE status = 'awaiting' AND expires_at < datetime('now')").run();
     db.prepare("DELETE FROM sessions WHERE expires_at < datetime('now')").run();
