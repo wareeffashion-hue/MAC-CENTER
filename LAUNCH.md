@@ -19,10 +19,9 @@
 | المتغير | القيمة |
 |---|---|
 | `NODE_ENV` | `production` |
-| `PUBLIC_URL` | `https://maccenter.com.sa` |
-| `APP_SECRET` | سلسلة عشوائية طويلة (مثلًا ناتج `openssl rand -hex 32`) |
+| `PUBLIC_URL` | `https://maccenter.com.sa` (إن غاب يستخدم نطاق Railway تلقائيًا) |
+| `APP_SECRET` | سلسلة عشوائية طويلة (مثلًا ناتج `openssl rand -hex 32`). إن غاب يولد مرة ويحفظ في `/data` |
 | `ADMIN_EMAIL` و`ADMIN_PASSWORD` | لإنشاء أول مدير عند أول تشغيل. احذفهما بعد الدخول |
-| `RAILWAY_RUN_UID` | `0` (على Railway فقط: يسمح للتطبيق بالكتابة في القرص الدائم) |
 
 4. اربط النطاق `maccenter.com.sa` بالخدمة، وفعّل HTTPS.
 5. ادخل `/admin`، ثم فعّل التحقق الثنائي من «حسابي».
