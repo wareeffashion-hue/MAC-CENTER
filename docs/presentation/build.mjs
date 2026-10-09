@@ -7,6 +7,7 @@ import { arch } from '../../src/views/art.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const pub = join(here, '..', '..', 'public');
+const CART_URI = 'data:image/svg+xml;base64,' + readFileSync(join(pub, 'img', 'cart-shape.svg')).toString('base64');
 const logo = (f, cls) => readFileSync(join(pub, 'img', f), 'utf8').replace('<svg ', `<svg class="${cls}" `).replace(/<style>.*?<\/style>/, '');
 const LOGO_H = logo('logo-horizontal.svg', 'logo');
 const LOGO_V = logo('logo-vertical.svg', 'logo');
@@ -289,8 +290,8 @@ html, body { margin: 0; background: #222; }
 body { font-family: G, sans-serif; -webkit-font-smoothing: antialiased; }
 .slide { position: relative; width: 1920px; height: 1080px; overflow: hidden; padding: 110px 130px 120px; page-break-after: always; break-after: page; background: #F7F4EC; color: #0F2219; }
 .slide.dark { background: #F8F5EE; color: #084832; isolation: isolate; }
-.slide.dark::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--pattern) 0 0 / 120px 160px, var(--pattern) 60px 80px / 120px 160px; opacity: .14; -webkit-mask-image: linear-gradient(to left, transparent 15%, #000 85%); mask-image: linear-gradient(to left, transparent 15%, #000 85%); }
-.slide { --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='128' viewBox='0 0 96 128'%3E%3Cg fill='none' stroke='%23006442' stroke-width='1'%3E%3Cpath d='M18 128V54a30 30 0 0 1 60 0v74'/%3E%3Cpath d='M28 128V58a20 20 0 0 1 40 0v70' stroke-opacity='.55'/%3E%3Cpath d='M48 10l3 5 5 3-5 3-3 5-3-5-5-3 5-3z' fill='%23006442' fill-opacity='.5' stroke='none'/%3E%3C/g%3E%3C/svg%3E"); }
+.slide.dark::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--micro); opacity: .3; -webkit-mask: url("${CART_URI}") left -180px center / 1150px auto no-repeat; mask: url("${CART_URI}") left -180px center / 1150px auto no-repeat; }
+.slide { --micro: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='14' viewBox='0 0 18 14'%3E%3Cg stroke='%23006442' stroke-width='1.3' stroke-linecap='round'%3E%3Cpath d='M2 3.5h6M4 7.5h6'/%3E%3C/g%3E%3Ccircle cx='14' cy='10.5' r='1.4' fill='%23006442'/%3E%3C/svg%3E") 0 0 / 22px 17px; }
 .slide.light { background: #FFFFFF; }
 h1, h2, h3 { margin: 0; font-weight: 700; line-height: 1.15; }
 h1 { font-size: 140px; line-height: 1.12; }
