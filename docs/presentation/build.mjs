@@ -3,11 +3,11 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { arch, CLIP } from '../../src/views/art.js';
+import { arch } from '../../src/views/art.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const pub = join(here, '..', '..', 'public');
-const CART_URI = 'data:image/svg+xml;base64,' + readFileSync(join(pub, 'img', 'cart-shape.svg')).toString('base64');
+const PAT_URI = 'data:image/svg+xml;base64,' + readFileSync(join(pub, 'img', 'cart-pattern.svg')).toString('base64');
 const logo = (f, cls) => readFileSync(join(pub, 'img', f), 'utf8').replace('<svg ', `<svg class="${cls}" `).replace(/<style>.*?<\/style>/, '');
 const LOGO_H = logo('logo-horizontal.svg', 'logo');
 const LOGO_V = logo('logo-vertical.svg', 'logo');
@@ -54,8 +54,8 @@ add('dark', `
 add('light split', `
   <div>
     <p class="kicker">الاتجاه الإبداعي</p>
-    <h2>عربة ماك</h2>
-    <p class="body">كل شيء في الواجهة مستنسخ من عربة الشعار: خطها الأصفر يحتضن كل قسم مع خطوط السرعة والعجلتين، ويرسم القسم نفسه داخلها بخط أخضر، وتدخل مندفعة ثم تستقر، وترفع مقدمتها عند المرور.</p>
+    <h2>ورق ماك</h2>
+    <p class="body">الأوف وايت هو الأساس، وعربة الشعار المائلة بخطها الأخضر العريض باترن الهوية. كل قسم ورقة من رزمة بتدرج من الأوف وايت إلى أخضر ماك، يرتفع فيها الأخضر كالحبر ثم يرسم القسم نفسه بخط أبيض.</p>
     <ul class="ticks">
       <li>ألوان ملف الشعار: الأخضر <span class="sw" style="background:#084832"></span><span class="sw" style="background:#006442"></span><span class="sw" style="background:#0C714F"></span> والأصفر <span class="sw" style="background:#FFBA1D"></span><span class="sw" style="background:#FFAE00"></span><span class="sw" style="background:#FFC72E"></span></li>
       <li>خط Gamila Arabic المعتمد، بأوزانه الخفيف والعادي والعريض</li>
@@ -86,7 +86,7 @@ add('dark', `
   <h2>حركة هادئة <span class="gold light">توحي بالفخامة</span></h2>
   <div class="grid3">
     ${[
-      ['site-hero-2.jpg', 'واجهة العرض', 'تتبدل الأقسام في النافذة بمسح عمودي، ويرسم كل قسم خطوطه الذهبية، وتندفع عربة القسم الجديد بخطوط السرعة مع كل تبديل.'],
+      ['site-hero-2.jpg', 'واجهة العرض', 'تتبدل الأقسام في النافذة بمسح عمودي، ويرسم كل قسم خطوطه الذهبية، ويرتفع الأخضر في ورقة القسم الجديد مع كل تبديل.'],
       ['site-depts.jpg', 'معرض الأقسام', 'يتحرك المعرض أفقيًا بينما يمرر الزائر الصفحة عموديًا، كأنه يمشي بين واجهات المجمع.'],
       ['site-menu.jpg', 'القائمة والانتقالات', 'ستارة خضراء تكشف القائمة والصفحات، وأزرار بسهم يتمدد، ومؤشر «اكتشف» فوق العناصر.'],
     ].map(([f, t, d]) => `<div class="g"><div class="frame sm">${img(f)}</div><h3>${t}</h3><p>${d}</p></div>`).join('')}
@@ -290,8 +290,8 @@ html, body { margin: 0; background: #222; }
 body { font-family: G, sans-serif; -webkit-font-smoothing: antialiased; }
 .slide { position: relative; width: 1920px; height: 1080px; overflow: hidden; padding: 110px 130px 120px; page-break-after: always; break-after: page; background: #F7F4EC; color: #0F2219; }
 .slide.dark { background: #F8F5EE; color: #084832; isolation: isolate; }
-.slide.dark::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--micro); opacity: .3; -webkit-mask: url("${CART_URI}") left -180px center / 1150px auto no-repeat; mask: url("${CART_URI}") left -180px center / 1150px auto no-repeat; }
-.slide { --micro: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='14' viewBox='0 0 18 14'%3E%3Cg stroke='%23006442' stroke-width='1.3' stroke-linecap='round'%3E%3Cpath d='M2 3.5h6M4 7.5h6'/%3E%3C/g%3E%3Ccircle cx='14' cy='10.5' r='1.4' fill='%23006442'/%3E%3C/svg%3E") 0 0 / 22px 17px; }
+.slide.dark::before { content: ""; position: absolute; inset: 0; z-index: -1; background: url("${PAT_URI}") left -210px top -190px / 720px auto no-repeat; }
+
 .slide.light { background: #FFFFFF; }
 h1, h2, h3 { margin: 0; font-weight: 700; line-height: 1.15; }
 h1 { font-size: 140px; line-height: 1.12; }
@@ -326,18 +326,13 @@ p { margin: 0; }
 .cover-logo .logo { height: 96px; width: auto; margin-bottom: 120px; }
 .cover .lead { font-size: 30px; color: #4B5C53; margin: 50px 0 28px; }
 .cover .meta { font-size: 22px; color: #75847B; padding-top: 22px; border-top: 1px solid rgba(15,34,25,.14); display: inline-block; }
-.cover-arch { align-self: center; }
-.arch { position: relative; display: block; width: 100%; aspect-ratio: 400 / 256; container-type: inline-size; }
-.cw-body { position: absolute; inset: 0 .6% 0 23.9%; margin-bottom: 16%; }
-.arch-in { position: absolute; inset: 0; clip-path: ${CLIP}; }
-.cw-line { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.cw-line path { fill: none; stroke: #FFBA1D; stroke-width: 6.4cqi; stroke-linecap: butt; stroke-linejoin: round; }
-.cw-sp { position: absolute; left: -29.7%; top: 29.4%; width: 23.8%; aspect-ratio: 72 / 25.7; background: #FFBA1D; border-radius: 1px; }
-.cw-sp2 { left: -22.4%; top: 58.8%; }
-.cw-wh { position: absolute; left: 38.4%; top: 100%; width: 14.7%; aspect-ratio: 1; margin-top: 5.9%; border-radius: 50%; background: #FFBA1D; }
-.cw-wh2 { left: 61.9%; }
-.lineart { position: absolute; inset: 34% 15% 16% 25%; width: auto; height: auto; }
-.lineart path { fill: none; stroke: #006442; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.cover-arch { align-self: center; justify-self: center; width: 500px; }
+.arch { position: relative; display: block; width: 100%; aspect-ratio: 3 / 4; isolation: isolate; }
+.arch::before, .arch::after { content: ""; position: absolute; inset: 0; border-radius: 6px; transform: translate(-8px, 8px); background: linear-gradient(#DCEAE1, #2C8E68 62%, #0A5038); }
+.arch::after { z-index: -1; transform: translate(-16px, 16px); background: linear-gradient(#CFE2D6, #17704F 62%, #073F2B); }
+.arch-in { position: absolute; inset: 0; z-index: 1; overflow: hidden; border-radius: 6px; background: linear-gradient(to bottom, #F3F6F1 0%, #E6F0E9 12%, #C7E3D3 25%, #6CC29F 47%, #1E8460 69%, #0B5C3F 85%, #073F2B 100%); box-shadow: 0 30px 50px -30px rgba(7,63,43,.6); }
+.lineart { position: absolute; inset: 40% 16% 9%; width: auto; height: auto; }
+.lineart path { fill: none; stroke: #F8F5EE; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
 .end .statement { font-size: 120px; line-height: 1.25; margin-bottom: 120px; }
 .end-logo .logo { height: 230px; width: auto; }
 
