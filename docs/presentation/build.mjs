@@ -3,7 +3,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { arch } from '../../src/views/art.js';
+import { arch, CLIP } from '../../src/views/art.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const pub = join(here, '..', '..', 'public');
@@ -54,8 +54,8 @@ add('dark', `
 add('light split', `
   <div>
     <p class="kicker">الاتجاه الإبداعي</p>
-    <h2>نوافذ ماك</h2>
-    <p class="body">تستلهم الواجهة نوافذ العرض داخل المجمع. نافذة مقوسة واحدة تتكرر كعلامة، بإطار ذهبي رفيع، يرسم داخلها كل قسم نفسه بخط ذهبي، وتتحرك عربة الشعار على أرضية الواجهة.</p>
+    <h2>عربة ماك</h2>
+    <p class="body">كل شيء في الواجهة مستنسخ من عربة الشعار: سلتها نافذة لكل قسم بخطوط السرعة والعجلتين، يرسم داخلها القسم نفسه بخط ذهبي، وتدخل مندفعة ثم تستقر، وترفع مقدمتها عند المرور.</p>
     <ul class="ticks">
       <li>ألوان ملف الشعار: الأخضر <span class="sw" style="background:#084832"></span><span class="sw" style="background:#006442"></span><span class="sw" style="background:#0C714F"></span> والأصفر <span class="sw" style="background:#FFBA1D"></span><span class="sw" style="background:#FFAE00"></span><span class="sw" style="background:#FFC72E"></span></li>
       <li>خط Gamila Arabic المعتمد، بأوزانه الخفيف والعادي والعريض</li>
@@ -86,7 +86,7 @@ add('dark', `
   <h2>حركة هادئة <span class="gold light">توحي بالفخامة</span></h2>
   <div class="grid3">
     ${[
-      ['site-hero-2.jpg', 'واجهة العرض', 'تتبدل الأقسام في النافذة بمسح عمودي، ويرسم كل قسم خطوطه الذهبية، وتتحرك العربة مع كل تبديل.'],
+      ['site-hero-2.jpg', 'واجهة العرض', 'تتبدل الأقسام في النافذة بمسح عمودي، ويرسم كل قسم خطوطه الذهبية، وتندفع عربة القسم الجديد بخطوط السرعة مع كل تبديل.'],
       ['site-depts.jpg', 'معرض الأقسام', 'يتحرك المعرض أفقيًا بينما يمرر الزائر الصفحة عموديًا، كأنه يمشي بين واجهات المجمع.'],
       ['site-menu.jpg', 'القائمة والانتقالات', 'ستارة خضراء تكشف القائمة والصفحات، وأزرار بسهم يتمدد، ومؤشر «اكتشف» فوق العناصر.'],
     ].map(([f, t, d]) => `<div class="g"><div class="frame sm">${img(f)}</div><h3>${t}</h3><p>${d}</p></div>`).join('')}
@@ -322,16 +322,21 @@ p { margin: 0; }
 
 
 /* الغلاف */
-.cover { display: grid; grid-template-columns: 1.25fr .75fr; align-items: end; gap: 120px; padding-bottom: 130px; }
+.cover { display: grid; grid-template-columns: 1.1fr .9fr; align-items: end; gap: 120px; padding-bottom: 130px; }
 .cover-logo .logo { height: 96px; width: auto; margin-bottom: 120px; }
 .cover .lead { font-size: 30px; color: #4B5C53; margin: 50px 0 28px; }
 .cover .meta { font-size: 22px; color: #75847B; padding-top: 22px; border-top: 1px solid rgba(15,34,25,.14); display: inline-block; }
-.cover-arch { height: 780px; }
-.cover-arch .arch { height: 100%; aspect-ratio: auto; }
-.arch { position: relative; display: block; width: 100%; aspect-ratio: 3/4; border-radius: 999px 999px 0 0; overflow: hidden; background: radial-gradient(120% 70% at 50% 30%, #0E5A3F 0%, #084832 55%, #063A28 100%); box-shadow: 0 0 0 1px rgba(247,244,236,.06); }
-.arch::after { content: ""; position: absolute; inset: 14px 14px 0; border: 1.5px solid rgba(255,186,29,.45); border-bottom: 0; border-radius: 999px 999px 0 0; }
-.arch-in { position: absolute; inset: 0; }
-.lineart { position: absolute; inset: 14% 9% 6%; width: 82%; height: 80%; margin: auto; }
+.cover-arch { align-self: center; }
+.arch { position: relative; display: block; width: 100%; aspect-ratio: 400 / 256; }
+.cw-body { position: absolute; inset: 0 .6% 0 23.9%; margin-bottom: 16%; }
+.arch-in { position: absolute; inset: 0; clip-path: ${CLIP}; background: radial-gradient(120% 80% at 62% 30%, #0E5A3F 0%, #084832 55%, #063A28 100%); }
+.cw-line { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.cw-line path { fill: none; stroke: #FFBA1D; stroke-opacity: .6; stroke-width: 2px; stroke-linecap: round; stroke-linejoin: round; }
+.cw-sp { position: absolute; left: -29.7%; top: 29.4%; width: 23.8%; aspect-ratio: 72 / 25.7; background: #FFBA1D; border-radius: 1px; }
+.cw-sp2 { left: -22.4%; top: 58.8%; }
+.cw-wh { position: absolute; left: 38.4%; top: 100%; width: 14.7%; aspect-ratio: 1; margin-top: 5.9%; border-radius: 50%; background: #FFBA1D; }
+.cw-wh2 { left: 61.9%; }
+.lineart { position: absolute; inset: 25% 13% 7% 21%; width: auto; height: auto; }
 .lineart path { fill: none; stroke: #FFBA1D; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; }
 .end .statement { font-size: 120px; line-height: 1.25; margin-bottom: 120px; }
 .end-logo .logo { height: 230px; width: auto; }

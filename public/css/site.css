@@ -1,5 +1,5 @@
 /* ماك سنتر — الاتجاه التحريري الفاخر
-   أخضر عميق وعاجي، خطوط رفيعة بدل البطاقات، نافذة مقوسة واحدة كعلامة، وذهب الشعار للتفاصيل فقط */
+   أخضر عميق وعاجي، خطوط رفيعة بدل البطاقات، نافذة العربة المستنسخة من الشعار كعلامة، وذهب الشعار للتفاصيل فقط */
 
 @font-face { font-family: Gamila; src: url(/fonts/gamila-light.woff2) format('woff2'); font-weight: 300; font-display: swap; }
 @font-face { font-family: Gamila; src: url(/fonts/gamila-regular.woff2) format('woff2'); font-weight: 400; font-display: swap; }
@@ -79,13 +79,40 @@ main { display: block; outline: none; }
 .st-muted::before { content: ""; width: 7px; height: 7px; border: 1px solid currentColor; border-radius: 50%; }
 @keyframes beat { 70%, 100% { box-shadow: 0 0 0 8px rgba(47, 163, 107, 0); } }
 
-/* ——— النافذة المقوسة: العلامة الوحيدة المتكررة ——— */
-.arch { position: relative; display: block; width: 100%; aspect-ratio: 3 / 4; border-radius: 999px 999px 0 0; overflow: hidden; background: radial-gradient(120% 70% at 50% 30%, #0E5A3F 0%, var(--g) 55%, var(--g-deep) 100%); isolation: isolate; }
-.arch::after { content: ""; position: absolute; inset: 10px 10px 0; border: 1px solid rgba(255, 186, 29, .38); border-bottom: 0; border-radius: 999px 999px 0 0; pointer-events: none; transition: inset .6s var(--out), border-color .6s; }
-.arch-in { position: absolute; inset: 0; }
+/* ——— نافذة العربة: سلة عربة الشعار نافذةً لكل قسم، بخطوط السرعة والعجلتين ——— */
+.arch { position: relative; display: block; width: 100%; aspect-ratio: 400 / 256; isolation: isolate; }
+.cw-body { position: absolute; inset: 0 .6% 0 23.9%; margin-bottom: 16%; transform-origin: 82% 100%; transition: translate .7s var(--out), rotate .7s var(--out), scale .25s var(--out); }
+.arch-in { position: absolute; inset: 0; clip-path: polygon(0.00% 0.00%, 80.13% 0.05%, 83.09% 0.59%, 85.84% 2.12%, 88.30% 4.56%, 90.39% 7.78%, 92.02% 11.70%, 93.11% 16.21%, 99.34% 52.88%, 100.02% 58.67%, 100.13% 64.46%, 99.70% 70.17%, 98.73% 75.69%, 97.23% 80.94%, 95.20% 85.84%, 92.81% 90.03%, 90.08% 93.53%, 87.07% 96.31%, 83.83% 98.34%, 80.43% 99.58%, 76.92% 100.00%, 31.59% 100.00%, 27.15% 99.19%, 23.03% 96.87%, 19.35% 93.20%, 16.23% 88.34%, 13.81% 82.44%, 12.22% 75.66%, 0.00% 0.00%); background: radial-gradient(120% 80% at 62% 30%, #0E5A3F 0%, var(--g) 55%, var(--g-deep) 100%); }
+.cw-line { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.cw-line path { fill: none; stroke: var(--y); stroke-opacity: .55; stroke-width: 1.2px; stroke-linecap: round; stroke-linejoin: round; transition: stroke-opacity .6s; }
+.cw-sp { position: absolute; left: -29.7%; top: 29.4%; width: 23.8%; aspect-ratio: 72 / 25.7; background: var(--y); border-radius: 1px; transform-origin: 100% 50%; transition: scale .7s var(--out), translate .7s var(--out); }
+.cw-sp2 { left: -22.4%; top: 58.8%; }
+.cw-wh { position: absolute; left: 38.4%; top: 100%; width: 14.7%; aspect-ratio: 1; margin-top: 5.9%; border-radius: 50%; background: var(--y); }
+.cw-wh2 { left: 61.9%; }
 .arch img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--out); }
 .lineart { position: absolute; inset: 14% 9% 6%; width: 82%; height: 80%; margin: auto; overflow: visible; transition: transform 1.2s var(--out); }
+.arch-in .lineart { inset: 25% 13% 7% 21%; width: auto; height: auto; }
 .lineart path { fill: none; stroke: var(--y); stroke-width: var(--lw, 1.15); stroke-linecap: round; stroke-linejoin: round; }
+
+/* الحركة: تدخل السلة مندفعة وتتمدد خطوط السرعة ثم تنكمش، وتهبط العجلتان، ويرسم الخط الذهبي نفسه */
+html.js .arch.cw-wait:not(.go) .cw-body { opacity: 0; }
+.arch.go .cw-body { animation: cw-drive 1.25s var(--out) both; animation-delay: var(--cw-d, 0s); }
+.arch.go .cw-sp { animation: cw-sp 1.25s var(--out) both; animation-delay: var(--cw-d, 0s); }
+.arch.go .cw-sp2 { animation-delay: calc(var(--cw-d, 0s) + .07s); }
+.arch.go .cw-wh { animation: cw-wh .9s var(--out) both; animation-delay: calc(var(--cw-d, 0s) + .38s); }
+.arch.go .cw-wh2 { animation-delay: calc(var(--cw-d, 0s) + .46s); }
+.arch.go .cw-line path { stroke-dasharray: 1; animation: cw-draw 1.6s var(--out) both; animation-delay: calc(var(--cw-d, 0s) + .3s); }
+@keyframes cw-drive { 0% { transform: translateX(-26%) skewX(12deg); opacity: 0; } 18% { opacity: 1; } 52% { transform: translateX(3%) skewX(-4deg); } 76% { transform: translateX(-1%) skewX(1.5deg); } 100% { transform: none; opacity: 1; } }
+@keyframes cw-sp { 0% { transform: scaleX(3.4); opacity: 0; } 25% { opacity: 1; } 55% { transform: scaleX(1.6); } 70% { opacity: .35; } 80% { opacity: 1; } 100% { transform: none; } }
+@keyframes cw-wh { 0% { transform: translateY(-80%) scale(.3); opacity: 0; } 55% { transform: translateY(12%) scale(1.15, .85); opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes cw-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+/* المرور: ترفع العربة مقدمتها وتنطلق خطوط السرعة، والضغط يكبسها */
+:is(a, button):is(:hover, :focus-visible) .cw-body { rotate: -2.5deg; translate: 2% 0; }
+:is(a, button):is(:hover, :focus-visible) .cw-sp { scale: 1.9 1; translate: -6% 0; }
+:is(a, button):is(:hover, :focus-visible) .cw-sp2 { scale: 1.5 1; }
+:is(a, button):is(:hover, :focus-visible) .cw-line path { stroke-opacity: .95; }
+:is(a, button):active .cw-body { scale: .97 .93; }
+@media (prefers-reduced-motion: reduce) { .arch.go :is(.cw-body, .cw-sp, .cw-wh, .cw-line path) { animation: none !important; } html.js .arch.cw-wait .cw-body { opacity: 1; } }
 .arch-lg { position: absolute; inset: 0; aspect-ratio: auto; height: 100%; }
 .arch-lg .lineart { --lw: .95; }
 html.js .lineart.draw path { stroke-dasharray: 1; stroke-dashoffset: 1; }
@@ -146,7 +173,9 @@ html.js .drawn .lineart.draw path, html.js .lineart.draw.drawn path { animation:
 .intro-logo .logo path { transform-box: fill-box; }
 .intro-wins { position: absolute; left: 50%; top: 50%; z-index: 1; width: 0; height: 0; }
 .intro-win { position: absolute; left: 0; top: 0; margin: 0; translate: -50% -50%; opacity: 0; display: grid; justify-items: center; gap: 10px; }
-.intro-win .arch { width: clamp(64px, 8.4vw, 116px); --lw: 2.2; box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .55); }
+.intro-win .arch { width: clamp(96px, 12.5vw, 176px); --lw: 2.2; }
+.intro-win .cw-body { filter: drop-shadow(0 14px 18px rgba(8, 72, 50, .28)); }
+.intro-win .arch.go { --cw-d: calc(.9s + var(--k) * 55ms); }
 .intro-win figcaption { font-size: clamp(11px, .9vw, 14px); font-weight: 700; color: var(--g); white-space: nowrap; }
 .intro-skip { position: absolute; z-index: 3; left: var(--pad); bottom: 34px; padding: 10px 0; border: 0; background: none; color: var(--ink3); font-weight: 700; font-size: 14px; cursor: pointer; }
 .intro-skip:hover { color: var(--g); }
@@ -180,14 +209,14 @@ html.js .drawn .lineart.draw path, html.js .lineart.draw.drawn path { animation:
 .hero-lead { max-width: 31em; font-size: clamp(17px, 1.3vw, 20px); color: var(--ink2); margin-bottom: 40px; }
 .hero-ctas { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 40px; }
 .vitrine { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: clamp(20px, 3vw, 48px); align-items: end; }
-.vitrine-stage { position: relative; width: min(100%, 440px, 50vh); aspect-ratio: 3 / 4; justify-self: center; }
+.vitrine-stage { position: relative; width: min(100%, 600px, 78vh); aspect-ratio: 400 / 256; justify-self: center; }
 .vitrine-stage::after { content: ""; position: absolute; inset-inline: -40px; bottom: 0; height: 1px; background: var(--hair); }
 .vitrine-item { position: absolute; inset: 0; margin: 0; clip-path: inset(100% 0 0 0); transition: clip-path 1.3s var(--expo); }
 .vitrine-item.on { clip-path: inset(0 0 0 0); z-index: 1; }
 .vitrine-item.off { clip-path: inset(0 0 100% 0); z-index: 2; }
 .vitrine-item .lineart { transform: scale(1.08); }
 .vitrine-item.on .lineart { transform: none; transition-delay: .2s; }
-.vitrine-cart { position: absolute; z-index: 3; bottom: 1px; left: -28%; width: 22%; }
+.vitrine-cart { display: none; position: absolute; z-index: 3; bottom: 1px; left: -28%; width: 22%; }
 .vitrine-cart .cart-mark { width: 100%; height: auto; fill: var(--y); }
 .vitrine-cart.roll { animation: roll 1.3s var(--expo); }
 @keyframes roll { 0% { transform: none; } 45% { transform: translateX(-14px); } 100% { transform: none; } }
@@ -244,13 +273,11 @@ html.js .statement-text span.lit { opacity: 1; }
 .depts-progress { flex: none; width: 160px; height: 1px; margin-bottom: clamp(36px, 6vh, 64px); background: var(--hair); overflow: hidden; }
 .depts-progress i { display: block; height: 100%; background: var(--g); transform: scaleX(var(--p, 0)); transform-origin: right; }
 .depts-track { display: flex; gap: clamp(28px, 5vw, 90px); padding: 0 var(--pad); will-change: transform; transform: translate3d(var(--x, 0), 0, 0); }
-.dept { flex: 0 0 auto; width: clamp(240px, 22vw, 360px); }
+.dept { flex: 0 0 auto; width: clamp(300px, 30vw, 460px); }
 .dept:nth-child(even) { margin-top: 5vh; }
 .dept-win { all: unset; display: block; width: 100%; cursor: pointer; }
-.dept-win .arch { height: min(40vh, 420px); aspect-ratio: auto; }
 .dept-win:hover .lineart, .dept-win:focus-visible .lineart { transform: scale(1.05); }
 .dept-win:hover .arch img { transform: scale(1.05); }
-.dept-win:hover .arch::after { inset: 18px 18px 0; border-color: rgba(255, 186, 29, .7); }
 .dept-win:focus-visible { outline: 2px solid var(--y2); outline-offset: 6px; }
 .dept-body { padding-top: 22px; }
 .dept-n { font-size: 14px; color: var(--y2); font-weight: 700; }
@@ -273,7 +300,7 @@ dialog.sheet[open]::backdrop { background: rgba(6, 58, 40, .6); }
 .sheet-x i::after { transform: rotate(-45deg); }
 .sheet-win { position: relative; isolation: isolate; padding: 70px 70px 0; background: var(--offwhite); border-bottom: 1px solid var(--hair); }
 .sheet-win::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--micro); -webkit-mask: var(--cart) center / 92% auto no-repeat; mask: var(--cart) center / 92% auto no-repeat; opacity: 0.28; }
-.sheet-win .arch { height: 40vh; aspect-ratio: auto; max-width: 300px; margin: 0 auto; }
+.sheet-win .arch { width: min(100%, 460px); margin: 0 auto 18px; }
 .sheet-body { padding: 36px 40px 56px; }
 .sheet-body h2 { font-size: 40px; color: var(--g); }
 .sheet-tag { font-size: 20px; font-weight: 300; color: var(--g2); margin: 6px 0 18px; }
@@ -289,7 +316,7 @@ dialog.sheet[open]::backdrop { background: rgba(6, 58, 40, .6); }
 /* ——— العروض ——— */
 .offers-s { padding: clamp(100px, 16vh, 180px) var(--pad); background: var(--ivory); }
 .offer-list { border-top: 1px solid var(--hair); margin-bottom: 40px; }
-.offer-row { display: grid; grid-template-columns: 50px 90px 1fr auto; align-items: center; gap: 28px; padding: 24px 0; border-bottom: 1px solid var(--hair); transition: padding .6s var(--out), background-color .4s; }
+.offer-row { display: grid; grid-template-columns: 50px 130px 1fr auto; align-items: center; gap: 28px; padding: 24px 0; border-bottom: 1px solid var(--hair); transition: padding .6s var(--out), background-color .4s; }
 .offer-row:hover { padding-inline: 18px; background: var(--paper); }
 .o-n { font-size: 14px; color: var(--y2); font-weight: 700; }
 .o-win .arch { --lw: 2.4; }
@@ -321,7 +348,7 @@ dialog.sheet[open]::backdrop { background: rgba(6, 58, 40, .6); }
 .b-row[open] .b-plus::after { transform: rotate(0deg); }
 .b-row::details-content { block-size: 0; overflow: clip; transition: block-size .8s var(--expo), content-visibility .8s allow-discrete; }
 .b-row[open]::details-content { block-size: auto; }
-.b-detail { display: grid; grid-template-columns: 200px 1fr auto; gap: clamp(24px, 4vw, 64px); align-items: end; padding: 8px 0 44px 0; padding-inline-start: 84px; }
+.b-detail { display: grid; grid-template-columns: 280px 1fr auto; gap: clamp(24px, 4vw, 64px); align-items: end; padding: 8px 0 44px 0; padding-inline-start: 84px; }
 .b-win .arch { --lw: 1.6; }
 .b-facts { margin: 0; display: grid; gap: 14px; }
 .b-facts > div { display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--hair); }
@@ -404,7 +431,7 @@ dialog.sheet[open]::backdrop { background: rgba(6, 58, 40, .6); }
 .p-head-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 28px; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--hair); font-size: 15px; color: var(--ink); }
 .p-head-meta .gold { color: var(--g2); font-weight: 700; font-size: 20px; }
 .p-head-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 36px; margin-top: 30px; }
-.p-head-win { position: relative; height: min(56vh, 540px); aspect-ratio: 3 / 4; justify-self: end; max-width: 100%; }
+.p-head-win { position: relative; width: min(100%, 620px); aspect-ratio: 400 / 256; justify-self: end; max-width: 100%; }
 .sheetwrap { padding: clamp(70px, 12vh, 140px) var(--pad); max-width: 1500px; }
 .cols { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 6vw, 110px); margin-bottom: clamp(56px, 10vh, 110px); }
 .col { padding-top: 28px; border-top: 1px solid var(--hair); }
@@ -416,7 +443,7 @@ dialog.sheet[open]::backdrop { background: rgba(6, 58, 40, .6); }
 .map { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 9; margin-top: 18px; background: var(--paper) repeating-linear-gradient(-45deg, transparent 0 14px, rgba(15, 34, 25, .04) 14px 15px); border: 1px solid var(--hair); }
 .map iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .mini-list { border-top: 1px solid var(--hair); margin-bottom: clamp(56px, 10vh, 110px); }
-.mini { display: grid; grid-template-columns: 50px 64px 1fr auto; gap: 24px; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--hair); transition: padding .6s var(--out), background-color .4s; }
+.mini { display: grid; grid-template-columns: 50px 96px 1fr auto; gap: 24px; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--hair); transition: padding .6s var(--out), background-color .4s; }
 .mini:hover { padding-inline: 16px; background: var(--paper); }
 .mini-n { font-size: 14px; color: var(--y2); font-weight: 700; }
 .mini-win .arch { --lw: 3; }
@@ -436,7 +463,7 @@ dialog.sheet[open]::backdrop { background: rgba(6, 58, 40, .6); }
 .f-page::before { content: ""; position: absolute; inset: 0 0 0 auto; width: 46%; z-index: -1; background: var(--micro); -webkit-mask: var(--cart) left -14% center / 120% auto no-repeat; mask: var(--cart) left -14% center / 120% auto no-repeat; opacity: 0.26; }
 .f-page { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: clamp(36px, 7vw, 140px); align-items: start; padding: calc(var(--hdr) + 70px) var(--pad) clamp(80px, 12vh, 140px); }
 .f-aside { position: sticky; top: 120px; }
-.f-win { width: 150px; margin-bottom: 36px; }
+.f-win { width: 230px; margin-bottom: 36px; }
 .f-win .arch { --lw: 1.8; }
 .f-aside h1 { font-size: clamp(40px, 5vw, 80px); line-height: 1.15; margin-bottom: 22px; color: var(--g); }
 .f-aside > p { color: var(--ink2); max-width: 26em; }
@@ -528,7 +555,7 @@ input[type="file"]::file-selector-button { margin-inline-end: 16px; padding: 10p
 .inline-form { display: grid; gap: 10px; justify-items: center; }
 .row-inline { display: flex; gap: 14px; align-items: center; }
 .row-inline input { width: 140px; text-align: center; letter-spacing: 6px; }
-.nf { width: 180px; margin-bottom: 20px; }
+.nf { width: 280px; margin-bottom: 20px; }
 
 /* ——— انتقال الصفحات ——— */
 @view-transition { navigation: auto; }
@@ -556,7 +583,7 @@ input[type="file"]::file-selector-button { margin-inline-end: 16px; padding: 10p
   .hero-grid, .p-head, .f-page, .faq-s, .cols, .menu-in { grid-template-columns: 1fr; }
   .vitrine { grid-template-columns: 1fr; gap: 18px; order: -1; }
   .hero-copy { order: 2; }
-  .vitrine-stage { justify-self: center; width: min(78vw, 46vh); }
+  .vitrine-stage { justify-self: center; width: min(92vw, 60vh); }
   .vitrine-cart { left: -2%; width: 20%; }
   .f-aside .g-note { display: none; }
   .vitrine-index { display: flex; overflow-x: auto; gap: 18px; scrollbar-width: none; padding-bottom: 6px; max-width: none; }
@@ -569,18 +596,17 @@ input[type="file"]::file-selector-button { margin-inline-end: 16px; padding: 10p
   .depts-head { flex-direction: column; align-items: stretch; }
   .depts-progress { display: none; }
   .depts-track { transform: none !important; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 10px; }
-  .dept { width: 72vw; scroll-snap-align: center; }
+  .dept { width: 84vw; scroll-snap-align: center; }
   .dept:nth-child(even) { margin-top: 0; }
-  .dept-win .arch { height: 58vh; }
   .b-row summary { grid-template-columns: 36px 1fr 30px; }
   .b-st { grid-column: 2; grid-row: 2; }
   .b-plus { grid-row: 1 / 3; grid-column: 3; }
   .b-detail { grid-template-columns: 1fr; padding-inline-start: 0; }
-  .b-win { width: 150px; }
+  .b-win { width: 210px; }
   .b-facts > div { grid-template-columns: 1fr; gap: 4px; }
-  .offer-row { grid-template-columns: 34px 64px 1fr; }
+  .offer-row { grid-template-columns: 34px 92px 1fr; }
   .o-meta { grid-column: 3; justify-items: start; text-align: start; }
-  .p-head-win { justify-self: center; height: 44vh; }
+  .p-head-win { justify-self: center; width: 88vw; }
   .f-aside { position: static; }
   .faq-s .s-head { position: static; }
   .ftr-cols { grid-template-columns: 1fr; }
@@ -593,9 +619,9 @@ input[type="file"]::file-selector-button { margin-inline-end: 16px; padding: 10p
   dialog.sheet[open] { transform: none; }
   @starting-style { dialog.sheet[open] { transform: translateY(100%); } }
   .sheet-win { padding: 64px 40px 0; }
-  .sheet-win .arch { height: 30vh; max-width: 220px; }
+  .sheet-win .arch { width: min(100%, 320px); }
   .sheet-body { padding: 28px 24px 44px; }
-  .mini { grid-template-columns: 34px 52px 1fr; }
+  .mini { grid-template-columns: 34px 76px 1fr; }
   .mini-go { display: none; }
   .s-head { grid-template-columns: 1fr; }
   .s-sub { grid-column: 1; }

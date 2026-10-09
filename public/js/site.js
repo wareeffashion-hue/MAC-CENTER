@@ -3,6 +3,8 @@
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // إعادة حركة دخول نافذة العربة
+  const drive = (a) => { if (!a) return; a.classList.remove('go'); void a.offsetWidth; a.classList.add('go'); };
   const desktop = matchMedia('(min-width: 901px)');
   document.documentElement.classList.add('js');
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -48,6 +50,7 @@
     if (reduce || !Element.prototype.animate) { finishIntro(); return; }
     introPlaying = true;
     intro.hidden = false;
+    $$('.intro-win .arch', intro).forEach(drive);
     intro.classList.add('js-run');
     document.body.style.overflow = 'hidden';
     // للمراحل المتعددة: التسارع لكل مقطع، والزمن الكلي خطي حتى تبقى نقاط التوقف في مواضعها
@@ -178,6 +181,7 @@
       next.classList.add('on'); next.setAttribute('aria-hidden', 'false');
       const svg = $('.lineart', next);
       if (svg) { svg.classList.remove('drawn'); void svg.getBoundingClientRect(); svg.classList.add('drawn'); }
+      drive($('.arch', next));
       btns.forEach((b, i) => { b.classList.toggle('on', i === n); b.setAttribute('aria-pressed', i === n); });
       cart?.classList.remove('roll'); void cart?.offsetWidth; cart?.classList.add('roll');
       cur = n;
@@ -199,6 +203,7 @@
   // العنصر المقصوص بالكامل لا يرصده المراقب، فنراقب حاويته
   const reveal = (el) => {
     if (el.matches('.lineart')) el.classList.add('drawn');
+    else if (el.matches('.arch')) el.classList.add('go');
     else if (el.dataset.lines) $$('.reveal-lines', el).forEach((x) => x.classList.add('in'));
     else el.classList.add('in');
   };
@@ -212,6 +217,7 @@
   const watch = (el) => (io ? io.observe(el) : reveal(el));
   $$('.reveal').forEach(watch);
   new Set($$('.reveal-lines').map((x) => x.parentElement)).forEach((p) => { p.dataset.lines = '1'; watch(p); });
+  $$('.arch').filter((a) => !a.closest('.intro, .vitrine-item, dialog')).forEach((a) => { a.classList.add('cw-wait'); watch(a); });
   $$('.lineart.draw').filter((s) => !s.closest('.vitrine-item') && !s.closest('dialog')).forEach(watch);
 
   // ——— البيان: الكلمات تضيء مع التمرير ———

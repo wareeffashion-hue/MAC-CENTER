@@ -1,4 +1,4 @@
-// رسومات خطية ذهبية رفيعة لكل قسم، ترسم نفسها داخل «النافذة» المقوسة.
+// رسومات خطية ذهبية رفيعة لكل قسم، ترسم نفسها داخل نافذة العربة.
 // تبقى بديلًا أنيقًا حتى ترفع الإدارة الصور الحقيقية من اللوحة.
 
 export const LINES = {
@@ -55,12 +55,37 @@ export const LINES = {
   ],
 };
 
-// نافذة مقوسة: إطار داخلي رفيع ورسم خطي، أو صورة حقيقية إن وجدت
+// نافذة العربة: سلة عربة الشعار نفسها نافذةً للقسم، بخطوط السرعة والعجلتين
+// الإحداثيات من رسم الشعار الأصلي (mark.svg)، وجسم السلة يقص بمضلع نسبي يتمدد مع أي مقاس
+const BODY = { x: 495.5, y: 900, w: 302, h: 185.7 };
+const OUTLINE = [
+  ['M', 495.5, 900], ['L', 737.5, 900.1], ['C', 755.8, 900.1, 771.9, 912.4, 776.7, 930.1], ['L', 795.5, 998.2],
+  ['C', 801.3, 1019.6, 796.8, 1042, 783, 1059.4], ['C', 769.7, 1076.2, 749.2, 1085.7, 727.8, 1085.7], ['L', 590.9, 1085.7],
+  ['C', 563.4, 1085.7, 539.3, 1067.1, 532.4, 1040.5], ['L', 495.5, 900],
+];
+const pct = (x, y) => `${(((x - BODY.x) / BODY.w) * 100).toFixed(2)}% ${(((y - BODY.y) / BODY.h) * 100).toFixed(2)}%`;
+export const CLIP = (() => {
+  const pts = []; let px = 0, py = 0;
+  for (const [c, ...a] of OUTLINE) {
+    if (c === 'C') {
+      for (let i = 1; i <= 6; i++) {
+        const t = i / 6, u = 1 - t;
+        pts.push(pct(u ** 3 * px + 3 * u * u * t * a[0] + 3 * u * t * t * a[2] + t ** 3 * a[4], u ** 3 * py + 3 * u * u * t * a[1] + 3 * u * t * t * a[3] + t ** 3 * a[5]));
+      }
+      [px, py] = [a[4], a[5]];
+    } else { pts.push(pct(a[0], a[1])); [px, py] = a; }
+  }
+  return `polygon(${pts.join(', ')})`;
+})();
+// الخط الذهبي الداخلي: مقبض العربة ثم جوانب السلة، وتعرّج حرف M في الأعلى بعمق أخف
+const LINE = 'M428 913H475.4C497 913 515.5 927.6 521 948.5L544.8 1037.2C550 1057 568 1072.8 590.9 1072.8H728C745 1072.8 762 1065 772.8 1051.7C784.5 1037 788 1019 783.1 1001.6L764.4 933.5C761 920 750 913 737.5 913C730 913 723 917 718 924L692 952C688 956 681 956 677 952L651 924C646 917 639 913 632.5 913C625 913 618 917 614 925L596 962';
+const CW = `<svg class="cw-line" viewBox="${BODY.x} ${BODY.y} ${BODY.w} ${BODY.h}" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" vector-effect="non-scaling-stroke" d="${LINE}"/></svg><i class="cw-sp"></i><i class="cw-sp cw-sp2"></i><i class="cw-wh"></i><i class="cw-wh cw-wh2"></i>`;
+
 export function arch(kind, { image, label = '', cls = '', draw = false } = {}) {
   const inner = image
     ? `<img src="${image}" alt="${label}" loading="lazy" decoding="async">`
     : `<svg class="lineart ${draw ? 'draw' : ''}" viewBox="0 0 200 200" ${label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"'}>${(LINES[kind] || LINES.mall).map((d, i) => `<path pathLength="1" style="--d:${i}" d="${d}"/>`).join('')}</svg>`;
-  return `<span class="arch ${cls}"><span class="arch-in">${inner}</span></span>`;
+  return `<span class="arch ${cls}"><span class="cw-body"><span class="arch-in">${inner}</span>${CW}</span></span>`;
 }
 
 // متوافق مع الاستخدام السابق

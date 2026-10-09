@@ -229,7 +229,7 @@ function branchLd(b) {
   };
 }
 
-// غلاف الصفحات الداخلية: مساحة خضراء بعنوان كبير ونافذة مقوسة
+// غلاف الصفحات الداخلية: مساحة خضراء بعنوان كبير ونافذة العربة
 function pageHead({ crumbs = [], title, lead = '', aside = '', kind, item }) {
   return `<section class="p-head">
     <div class="p-head-copy">
