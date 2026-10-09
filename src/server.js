@@ -65,7 +65,9 @@ export function createApp(db) {
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const db = openDb();
   seedCatalog(db);
-  if (ensureAdmin(db, config.admin.email, config.admin.password)) console.log(`أنشئ حساب المدير ${config.admin.email}`);
+  const made = ensureAdmin(db, config.admin.email, config.admin.password, process.env.ADMIN_RESET === '1');
+  if (made === 'reset') console.log(`أعيد تعيين كلمة مرور المدير ${config.admin.email}. احذف ADMIN_RESET بعد الدخول`);
+  else if (made) console.log(`أنشئ حساب المدير ${config.admin.email}`);
   if (!db.prepare("SELECT 1 FROM users WHERE role = 'admin'").get()) {
     console.warn('لا يوجد حساب مدير. شغّل: npm run create-admin -- البريد كلمة_المرور');
   }

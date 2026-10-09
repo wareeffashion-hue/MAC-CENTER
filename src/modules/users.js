@@ -32,7 +32,16 @@ export function saveUser(db, id, input) {
   return publicUser(db.prepare('SELECT * FROM users WHERE id = ?').get(id));
 }
 
-export function ensureAdmin(db, email, password) {
+export function ensureAdmin(db, email, password, reset = false) {
+  // استعادة الدخول: مع ADMIN_RESET=1 يعاد تعيين كلمة مرور المدير ويلغى تحققه الثنائي وجلساته
+  if (reset && email && password) {
+    const u = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase());
+    if (u) {
+      db.prepare("UPDATE users SET password = ?, totp_secret = NULL, active = 1, role = 'admin' WHERE id = ?").run(hashPassword(password), u.id);
+      db.prepare('DELETE FROM sessions WHERE user_id = ?').run(u.id);
+      return 'reset';
+    }
+  }
   if (db.prepare("SELECT 1 FROM users WHERE role = 'admin'").get()) return false;
   if (!email || !password) return false;
   db.prepare("INSERT INTO users (name, email, role, password) VALUES (?, ?, 'admin', ?)").run('مدير النظام', email.toLowerCase(), hashPassword(password));
