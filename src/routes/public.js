@@ -29,7 +29,7 @@ export function publicRoutes(router, db) {
     // الافتتاحية مرة واحدة في الجلسة
     const intro = !/(?:^|;\s*)mc_seen=1/.test(req.headers.cookie || '');
     if (intro) res.setHeader('Set-Cookie', 'mc_seen=1; Path=/; SameSite=Lax');
-    html(res, P.homePage({ ...c, sections: listSections(db), offers: listOffers(db, { publicOnly: true }), faqs: listFaqs(db), reviews: featuredReviews(db), intro }));
+    html(res, P.homePage({ ...c, sections: listSections(db), offers: listOffers(db, { publicOnly: true }), faqs: listFaqs(db), reviews: featuredReviews(db), intro, occasionPreview: req.query.occasion }));
   });
 
   router.get('/branches/:slug', (req, res) => {

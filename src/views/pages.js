@@ -28,13 +28,48 @@ function waBtn(b, ctx, label = 'استفسار عبر واتساب') {
 
 // ———————————————————— الرئيسية ————————————————————
 
-export function homePage({ site, branches, sections, offers, faqs, reviews, intro }) {
+// مناسبة مؤقتة في واجهة الموقع: تظهر بين تاريخين بتوقيت الرياض، وتعرض قبلها أو بعدها بإضافة ?occasion=1 للمعاينة
+const OCCASION = {
+  from: '2026-10-15', until: '2026-10-19',
+  image: '/img/occasion/ceo.webp', name: 'محمد خميس المالكي', role: 'المدير التنفيذي لشركة ماك سنتر',
+  kicker: '١٦ أكتوبر · اليوم العالمي للمدير',
+  text: 'في اليوم العالمي للمدير نقول لقائدنا: شكرًا على رؤية جعلت ماك سنتر وجهة العائلة في المدينة المنورة، وعلى ثقة تلهم فريقنا كل يوم.',
+};
+function occasionActive(preview) {
+  if (preview === '1') return true;
+  if (preview === '0') return false;
+  const today = new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 10);
+  return today >= OCCASION.from && today < OCCASION.until;
+}
+function occasionHero() {
+  const o = OCCASION;
+  return `
+<section class="occ" aria-labelledby="occ-title" data-occ>
+  <div class="occ-grid">
+    <div class="occ-copy">
+      <p class="occ-kicker"><i aria-hidden="true"></i>${esc(o.kicker)}</p>
+      <h2 id="occ-title" class="occ-title"><span class="ln"><span>شكرًا</span></span><span class="ln name"><span>${esc(o.name)}</span></span></h2>
+      <p class="occ-role">${esc(o.role)}</p>
+      <p class="occ-text">${esc(o.text)}</p>
+      <p class="occ-sign">${CART('occ-cart')}<span>فريق ماك سنتر</span></p>
+      <a class="link-arrow occ-next" href="#main-hero"><span>تابع إلى الموقع</span><i aria-hidden="true"></i></a>
+    </div>
+    <figure class="occ-fig">
+      <div class="occ-stage" aria-hidden="true"><span class="occ-sp"></span><span class="occ-sp y"></span><span class="occ-sp"></span></div>
+      <img class="occ-img" src="${o.image}" alt="${esc(o.name)}، ${esc(o.role)}" width="900" height="1295" fetchpriority="high" decoding="async">
+      <figcaption class="occ-cap"><b>${esc(o.name)}</b><span>${esc(o.role)}</span></figcaption>
+    </figure>
+  </div>
+</section>`;
+}
+
+export function homePage({ site, branches, sections, offers, faqs, reviews, intro, occasionPreview }) {
   const title = (site.heroTitle || 'اختيارات العائلة في وجهة واحدة').split(' ');
   const cut = Math.max(1, Math.floor(title.length / 2)) - 1;
   const aboutWords = String(site.about || '').split(/\s+/).filter(Boolean);
 
   const hero = `
-<section class="hero" aria-labelledby="hero-title" data-hero>
+<section class="hero" id="main-hero" aria-labelledby="hero-title" data-hero>
   <div class="hero-grid">
     <div class="hero-copy">
       <h1 id="hero-title" class="hero-title">
@@ -163,7 +198,7 @@ export function homePage({ site, branches, sections, offers, faqs, reviews, intr
 
   return layout({
     path: '/', site, branches, jsonLd, intro: { autoplay: intro, sections },
-    body: hero + about + departments + offersHtml + branchesHtml + servicesHtml + reviewsHtml + faqHtml + contactDialog(branches),
+    body: (occasionActive(occasionPreview) ? occasionHero() : '') + hero + about + departments + offersHtml + branchesHtml + servicesHtml + reviewsHtml + faqHtml + contactDialog(branches),
     bodyClass: 'home',
   });
 }

@@ -326,8 +326,12 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden && visible && live) loop(); });
 
     if (reduce || !Element.prototype.animate) { eng.classList.add('live', 'hinted'); }
-    else if (document.body.classList.contains('has-intro')) document.addEventListener('intro:done', () => setTimeout(start, 200), { once: true });
-    else setTimeout(start, 350);
+    else {
+      // يبدأ المحرك حين يظهر في الشاشة، وبعد انتهاء الافتتاحية
+      const go = () => { const o = new IntersectionObserver(([en]) => { if (en.isIntersecting) { o.disconnect(); setTimeout(start, 250); } }, { threshold: .25 }); o.observe(eng); };
+      if (document.body.classList.contains('has-intro')) document.addEventListener('intro:done', go, { once: true });
+      else go();
+    }
   }
 
   // ——— سرعة التمرير: تمد خطوط سرعة الشعار، وتسوق عربة الطريق أسفل الشاشة ———

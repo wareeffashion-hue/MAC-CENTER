@@ -113,6 +113,54 @@ html.js .lineart.draw path { stroke-dasharray: 1; stroke-dashoffset: 1; }
 html.js .drawn .lineart.draw path, html.js .lineart.draw.drawn path { animation: draw 1.8s var(--out) forwards; animation-delay: calc(var(--d) * 140ms + 150ms); }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 
+/* ——— مناسبة: اليوم العالمي للمدير ——— */
+.occ { position: relative; isolation: isolate; overflow: hidden; min-height: 100svh; display: flex; align-items: flex-end; padding: calc(var(--hdr) + 40px) var(--pad) 0; background: var(--offwhite); }
+.occ::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--pat) left -16vw bottom -18vh / min(52vw, 780px) auto no-repeat; opacity: .14; pointer-events: none; }
+.occ-grid { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 96px); align-items: end; }
+.occ-copy { padding-bottom: clamp(48px, 9vh, 110px); align-self: center; }
+.occ-kicker { display: flex; align-items: center; gap: 12px; margin: 0 0 22px; font-size: 15px; font-weight: 700; color: var(--g3); }
+.occ-kicker i { width: 34px; height: 3px; background: var(--y); border-radius: 2px; }
+.occ-title { margin: 0 0 14px; line-height: 1.08; color: var(--g); }
+.occ-title .ln { display: block; overflow: hidden; padding: .06em 0 .12em; margin: -.06em 0 -.12em; }
+.occ-title .ln > span { display: inline-block; }
+.occ-title .ln:first-child { font-size: clamp(64px, 9vw, 168px); font-weight: 300; color: var(--g3); }
+.occ-title .name { font-size: clamp(40px, 4.8vw, 88px); font-weight: 700; }
+.occ-role { margin: 0 0 26px; font-size: clamp(17px, 1.4vw, 22px); font-weight: 700; color: var(--ink2); }
+.occ-text { max-width: 30em; margin: 0 0 30px; font-size: clamp(17px, 1.25vw, 20px); color: var(--ink2); }
+.occ-sign { display: flex; align-items: center; gap: 12px; margin: 0 0 34px; font-weight: 700; color: var(--g); }
+.occ-cart { width: 44px; height: auto; fill: var(--y); }
+.occ-fig { position: relative; margin: 0; align-self: end; justify-self: center; width: min(100%, 620px); }
+/* ورقة خضراء بتدرج الهوية خلف المدير، يخرج منها رأسه */
+.occ-stage { position: absolute; left: 4%; right: 4%; bottom: 0; height: 74%; border-radius: 28px 28px 0 0; background: linear-gradient(to bottom, #EAF3EC 0%, #A9D8BF 26%, #3E9F79 58%, #0E6446 84%, #073F2B 100%); box-shadow: 0 -30px 80px -40px rgba(7, 63, 43, .45); overflow: hidden; }
+.occ-stage::after { content: ""; position: absolute; inset: 0; opacity: .2; mix-blend-mode: soft-light; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.occ-sp { position: absolute; left: -2%; height: 4.2%; width: 34%; background: #0D6A4A; border-radius: 0 3px 3px 0; transform-origin: 0 50%; }
+.occ-sp { top: 30%; } .occ-sp.y { top: 38%; width: 42%; background: var(--y); } .occ-sp:nth-child(3) { top: 46%; width: 28%; }
+.occ-img { position: relative; z-index: 1; display: block; width: 86%; height: auto; margin: 0 auto; filter: drop-shadow(0 30px 40px rgba(7, 63, 43, .25)); }
+.occ-cap { position: absolute; z-index: 2; right: 8%; bottom: 7%; display: grid; gap: 2px; padding: 12px 16px; border-radius: 12px; background: rgba(248, 245, 238, .92); backdrop-filter: blur(6px); box-shadow: 0 10px 30px -12px rgba(7, 63, 43, .35); font-size: 13px; color: var(--ink2); }
+.occ-cap b { font-size: 16px; color: var(--g); }
+@media (prefers-reduced-motion: no-preference) {
+  html.js .occ .occ-title .ln > span { animation: rise-in 1.2s var(--out) both; animation-delay: calc(var(--t0, .3s) + .25s); }
+  html.js .occ .occ-title .ln:nth-child(2) > span { animation-delay: calc(var(--t0, .3s) + .4s); }
+  html.js .occ :is(.occ-kicker, .occ-role, .occ-text, .occ-sign, .occ-next) { animation: fade-up 1s var(--out) both; animation-delay: calc(var(--t0, .3s) + .7s); }
+  html.js .occ .occ-stage { animation: occ-stage 1.5s var(--expo) both; animation-delay: var(--t0, .3s); }
+  html.js .occ .occ-img { animation: occ-rise 1.6s var(--out) both; animation-delay: calc(var(--t0, .3s) + .35s); }
+  html.js .occ .occ-sp { animation: occ-sp 1.1s var(--out) both; animation-delay: calc(var(--t0, .3s) + 1s); }
+  html.js .occ .occ-sp.y { animation-delay: calc(var(--t0, .3s) + 1.08s); }
+  html.js .occ .occ-sp:nth-child(3) { animation-delay: calc(var(--t0, .3s) + 1.16s); }
+  html.js .occ .occ-cap { animation: fade-up 1s var(--out) both; animation-delay: calc(var(--t0, .3s) + 1.4s); }
+  html.js .has-intro .occ, html.js .has-intro .occ * { animation-play-state: paused !important; }
+}
+@keyframes occ-stage { from { clip-path: inset(100% 0 0 0 round 28px 28px 0 0); } to { clip-path: inset(0 0 0 0 round 28px 28px 0 0); } }
+@keyframes occ-rise { from { opacity: 0; transform: translateY(14%) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes occ-sp { 0% { transform: scaleX(0); } 55% { transform: scaleX(1.5); } 100% { transform: none; } }
+@media (max-width: 900px) {
+  .occ { min-height: auto; padding-top: calc(var(--hdr) + 24px); }
+  .occ-grid { grid-template-columns: 1fr; gap: 8px; }
+  .occ-fig { order: -1; width: min(100%, 440px); }
+  .occ-copy { padding-bottom: 56px; }
+  .occ-cap { display: none; }
+}
+
 /* ——— محرك العربة: الشعار قلب الواجهة ——— */
 .engine { position: relative; width: 100%; max-width: 900px; aspect-ratio: 1 / .86; justify-self: center; align-self: center; }
 .engine-trail { position: absolute; top: -25%; left: -60vw; width: calc(100% + 60vw + 8%); height: 140%; pointer-events: none; z-index: 0; }
