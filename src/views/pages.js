@@ -56,7 +56,7 @@ function occasionHero() {
     </div>
     <figure class="occ-fig">
       <div class="occ-stage" aria-hidden="true"><span class="occ-sp"></span><span class="occ-sp y"></span><span class="occ-sp"></span></div>
-      <img class="occ-img" src="${o.image}" alt="${esc(o.name)}، ${esc(o.role)}" width="900" height="1295" fetchpriority="high" decoding="async">
+      <img class="occ-img" src="${o.image}" alt="${esc(o.name)}، ${esc(o.role)}" width="900" height="1287" fetchpriority="high" decoding="async">
       <figcaption class="occ-cap"><b>${esc(o.name)}</b><span>${esc(o.role)}</span></figcaption>
     </figure>
   </div>
