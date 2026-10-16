@@ -45,8 +45,9 @@ function introMarkup({ autoplay, sections = [] }) {
 
 export const AR_NUM = (n) => String(n).padStart(2, '0').replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
 
-export function layout({ title, description, path = '/', body, jsonLd, bodyClass = '', site = {}, branches = [], intro = false, dark = false }) {
-  const fullTitle = title ? `${title} | ماك سنتر` : 'ماك سنتر | اختيارات العائلة في وجهة واحدة';
+export function layout({ title, description, path = '/', body, jsonLd, bodyClass = '', site = {}, branches = [], intro = false, dark = false, image = null, noindex = false }) {
+  // لا نكرر اسم العلامة إن كان العنوان نفسه يحمله (صفحة فرع ماك سنتر مثلًا)
+  const fullTitle = !title ? 'ماك سنتر | اختيارات العائلة في وجهة واحدة' : title.includes('ماك سنتر') ? title : `${title} | ماك سنتر`;
   const desc = description || 'ماك سنتر ومجمع عادل الدولي في المدينة المنورة: أزياء العائلة وفساتين المناسبات والأحذية والحقائب والمفروشات والألعاب والقرطاسية، مع عروض واتساب وتوصيل لجميع مناطق المملكة.';
   const url = config.publicUrl + path;
   const socials = Object.entries(site.socials || {}).filter(([, v]) => v);
@@ -59,7 +60,7 @@ export function layout({ title, description, path = '/', body, jsonLd, bodyClass
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${esc(fullTitle)}</title>
 <meta name="description" content="${esc(desc)}">
-<link rel="canonical" href="${esc(url)}">
+${noindex ? '<meta name="robots" content="noindex">' : `<link rel="canonical" href="${esc(url)}">`}
 <meta name="theme-color" content="#084832">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ar_SA">
@@ -67,7 +68,7 @@ export function layout({ title, description, path = '/', body, jsonLd, bodyClass
 <meta property="og:title" content="${esc(fullTitle)}">
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${esc(url)}">
-<meta property="og:image" content="${esc(config.publicUrl + '/og.png')}">
+<meta property="og:image" content="${esc(image ? (image.startsWith('http') ? image : config.publicUrl + image) : config.publicUrl + '/og.png')}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="view-transition" content="same-origin">
 <link rel="icon" href="/img/mark.svg" type="image/svg+xml">

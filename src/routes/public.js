@@ -28,7 +28,7 @@ export function publicRoutes(router, db) {
     const c = common();
     // الافتتاحية مرة واحدة في الجلسة
     const intro = !/(?:^|;\s*)mc_seen=1/.test(req.headers.cookie || '');
-    if (intro) res.setHeader('Set-Cookie', 'mc_seen=1; Path=/; SameSite=Lax');
+    if (intro) res.setHeader('Set-Cookie', 'mc_seen=1; Path=/; Max-Age=31536000; SameSite=Lax'); // مرة واحدة لكل جهاز لا لكل جلسة
     html(res, P.homePage({ ...c, sections: listSections(db), offers: listOffers(db, { publicOnly: true }), faqs: listFaqs(db), reviews: featuredReviews(db), intro, occasionPreview: req.query.occasion }));
   });
 
@@ -120,9 +120,15 @@ export function publicRoutes(router, db) {
     html(res, P.feedbackPage({ ...common(), sections: listSections(db), qr: req.query.qr, values: { branch: req.query.branch, type: req.query.type } }));
   });
 
+  let uploading = 0; // طلبات المرفقات الكبيرة تُحمَّل في الذاكرة؛ نحد عددها المتزامن
   router.post('/feedback', async (req, res) => {
     limited(req, 'fb', 8);
-    const { fields, files } = await parseRequest(req, { limit: 32 * 1024 * 1024 });
+    const big = Number(req.headers['content-length'] || 0) > 1024 * 1024;
+    if (big && uploading >= 4) throw new HttpError(503, 'الخادم مشغول، حاول بعد دقيقة');
+    if (big) uploading++;
+    let parsed;
+    try { parsed = await parseRequest(req, { limit: 32 * 1024 * 1024 }); } finally { if (big) uploading--; }
+    const { fields, files } = parsed;
     try {
       const r = createTicket(db, fields, files, { source: fields.qr ? 'qr' : 'web' });
       if (String(req.headers.accept || '').includes('application/json')) return sendJson(res, 200, { ref: r.ref, trackKey: r.trackKey, note: r.responseNote });
@@ -205,11 +211,12 @@ export function publicRoutes(router, db) {
   });
 
   router.get('/sitemap.xml', (req, res) => {
-    const urls = ['/', '/offers', '/subscribe', '/feedback', '/privacy',
-      ...listBranches(db).map((b) => `/branches/${b.slug}`),
-      ...listOffers(db, { publicOnly: true }).map((o) => `/offers/${o.slug}`)];
+    const day = (v) => (v ? String(v).slice(0, 10) : null);
+    const urls = [['/'], ['/offers'], ['/subscribe'], ['/feedback'], ['/privacy'],
+      ...listBranches(db).map((b) => [`/branches/${b.slug}`, day(b.updated_at)]),
+      ...listOffers(db, { publicOnly: true }).map((o) => [`/offers/${o.slug}`, day(o.updated_at)])];
     res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8' });
-    res.end(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${config.publicUrl}${encodeURI(u)}</loc></url>`).join('')}</urlset>`);
+    res.end(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map(([u, m]) => `<url><loc>${config.publicUrl}${encodeURI(u)}</loc>${m ? `<lastmod>${m}</lastmod>` : ''}</url>`).join('')}</urlset>`);
   });
 
   router.get('/manifest.webmanifest', (req, res) => {

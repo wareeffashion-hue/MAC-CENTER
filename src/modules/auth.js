@@ -1,7 +1,7 @@
 import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import { token, sha256 } from '../lib/ids.js';
 import { json, sqlNow } from '../db.js';
-import { parseCookies, setCookie, fail } from '../http.js';
+import { parseCookies, setCookie, fail, rateLimit, isLimited } from '../http.js';
 import { config } from '../config.js';
 import { verifyTotp } from '../lib/totp.js';
 
@@ -97,10 +97,16 @@ export function destroySession(db, req, res) {
 }
 
 export function login(db, res, email, password) {
+  const key = String(email || '').trim().toLowerCase();
+  // تحسب المحاولات الخاطئة فقط لكل حساب، فلا يقفل الدخول الصحيح ولا يفيد تبديل عنوان IP في التخمين
+  if (key && isLimited(`login-email:${key}`, 10)) fail(429, 'محاولات كثيرة لهذا الحساب، انتظر 15 دقيقة');
   const user = db.prepare('SELECT * FROM users WHERE email = ? AND active = 1').get(String(email || '').trim());
   // نحسب التجزئة حتى عند غياب المستخدم لتقارب زمن الاستجابة
   const ok = user ? checkPassword(password, user.password) : (checkPassword(password, hashPassword('x')), false);
-  if (!ok) fail(401, 'البريد أو كلمة المرور غير صحيحة');
+  if (!ok) {
+    if (key) rateLimit(`login-email:${key}`, { max: 10, windowMs: 15 * 60000 });
+    fail(401, 'البريد أو كلمة المرور غير صحيحة');
+  }
   createSession(db, res, user.id, { pending2fa: !!user.totp_secret });
   if (!user.totp_secret) db.prepare("UPDATE users SET last_login_at = datetime('now') WHERE id = ?").run(user.id);
   return { user, needs2fa: !!user.totp_secret };
@@ -109,7 +115,14 @@ export function login(db, res, email, password) {
 export function completeTwoFactor(db, req, res, code) {
   const user = sessionUser(db, req, { allowPending: true });
   if (!user || !user.pending_2fa) fail(401, 'انتهت الجلسة، سجّل الدخول من جديد');
-  if (!verifyTotp(user.totp_secret, code)) fail(401, 'رمز التحقق غير صحيح');
+  if (!verifyTotp(user.totp_secret, code)) {
+    // خمس محاولات خاطئة لكل حساب تلغي الجلسة المعلقة، فلا يمكن تخمين الرمز حتى لو عُرفت كلمة المرور
+    if (!rateLimit(`2fa-user:${user.id}`, { max: 5, windowMs: 15 * 60000 })) {
+      db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(user.token_hash);
+      fail(429, 'محاولات كثيرة، سجّل الدخول من جديد بعد 15 دقيقة');
+    }
+    fail(401, 'رمز التحقق غير صحيح');
+  }
   db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(user.token_hash);
   createSession(db, res, user.id);
   db.prepare("UPDATE users SET last_login_at = datetime('now') WHERE id = ?").run(user.id);
@@ -120,7 +133,7 @@ export function publicUser(u) {
   return {
     id: u.id, name: u.name, email: u.email, role: u.role, roleName: ROLES[u.role],
     branchIds: json.parse(u.branch_ids, []), twoFactor: !!u.totp_secret, active: !!u.active,
-    lastLoginAt: u.last_login_at, permissions: PERMISSIONS[u.role],
+    lastLoginAt: u.last_login_at, permissions: PERMISSIONS[u.role], waPhone: u.wa_phone || null,
   };
 }
 

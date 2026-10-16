@@ -99,3 +99,14 @@ test('الصور فقط بالمحتوى الصحيح وبحد ثلاث', () => 
   const ok = createTicket(db, { type: 'complaint', branch: 1, body: 'x' }, [{ field: 'images', data: png }]);
   assert.equal(db.prepare('SELECT COUNT(*) n FROM attachments WHERE ticket_id = ?').get(ok.id).n, 1);
 });
+
+test('النموذج العام لا يرفع الأولوية ولا يربط تقييمًا، والموظف يستطيع', () => {
+  const db = freshDb();
+  const pub = createTicket(db, { type: 'complaint', branch: 1, body: 'تأخير', priority: 'urgent', review_id: 5 }, [], { source: 'web' });
+  const row = db.prepare('SELECT priority, review_id FROM tickets WHERE id = ?').get(pub.id);
+  assert.notEqual(row.priority, 'urgent');
+  assert.equal(row.review_id, null);
+  const staff = createTicket(db, { type: 'complaint', branch: 1, body: 'عاجل', priority: 'urgent' }, [], { source: 'staff' });
+  assert.equal(db.prepare('SELECT priority FROM tickets WHERE id = ?').get(staff.id).priority, 'urgent');
+  assert.throws(() => createTicket(db, { type: 'constructor', branch: 1, body: 'x' }), (e) => e instanceof HttpError && e.status === 400);
+});

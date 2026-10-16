@@ -1,4 +1,4 @@
-import { state, api, esc, $, $$, ic, can, toast, run, ago, initials } from './core.js';
+import { state, api, esc, $, $$, ic, can, toast, run, ago, initials, closeDrawer } from './core.js';
 
 // كل شاشة وحدة مستقلة تحمل عند الحاجة؛ إضافة شاشة جديدة = سطر هنا وملف في views
 const ROUTES = [
@@ -55,13 +55,20 @@ async function route() {
   const view = $('#view');
   const token = Symbol();
   current = token;
+  closeDrawer(); // درج الصفحة السابقة (تذكرة مثلًا) لا يبقى مفتوحًا فوق صفحة أخرى
+  // نعطل الصفحة السابقة أثناء التحميل حتى لا تُضغط أزرارها القديمة
+  view.classList.add('loading');
+  view.setAttribute('aria-busy', 'true');
   try {
     const mod = await r.load();
     if (current !== token) return;
-    view.className = 'view';
+    view.className = 'view loading';
     void view.offsetWidth;
     await mod.render(view, { params, query, setTitle, refreshBadges: pollBadges });
+    if (current === token) { view.classList.remove('loading'); view.removeAttribute('aria-busy'); }
   } catch (err) {
+    view.classList.remove('loading');
+    view.removeAttribute('aria-busy');
     if (err.status === 401) return;
     console.error(err);
     view.innerHTML = `<div class="banner">${ic('alert')}<span>تعذر تحميل الصفحة: ${esc(err.message)}</span></div>`;

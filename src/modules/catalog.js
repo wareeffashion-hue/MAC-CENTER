@@ -134,6 +134,10 @@ export function saveBranch(db, id, input, { canEditCore = true } = {}) {
   if (input.hours) {
     try { hours = validateHours(input.hours); } catch { errors.hours = 'صيغة الدوام غير صحيحة'; }
   }
+  // روابط الخريطة والتقييم تظهر للعملاء؛ نقبل روابط Google فقط
+  const googleUrl = (v) => !v || /^https:\/\/([\w-]+\.)*(google\.[a-z.]+|goo\.gl|g\.page)(\/|$)/i.test(String(v).trim());
+  if (!googleUrl(input.maps_url)) errors.maps_url = 'رابط خرائط Google يبدأ بـ https://';
+  if (!googleUrl(input.google_review_url)) errors.google_review_url = 'رابط تقييم Google يبدأ بـ https://';
   const exceptions = Array.isArray(input.exceptions) ? input.exceptions.filter((e) => /^\d{4}-\d{2}-\d{2}$/.test(e.from)) : [];
   if (Object.keys(errors).length) fail(400, 'راجع الحقول المطلوبة', errors);
 

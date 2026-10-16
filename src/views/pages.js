@@ -248,11 +248,12 @@ export function contactDialog(branches) {
 function branchLd(b) {
   return {
     '@type': 'Store', '@id': `${config.publicUrl}/branches/${b.slug}#store`, name: b.name, url: `${config.publicUrl}/branches/${b.slug}`,
-    telephone: '+' + b.whatsapp, parentOrganization: { '@id': `${config.publicUrl}/#org` },
+    telephone: b.phone ? '+966' + String(b.phone).replace(/^0/, '') : '+' + b.whatsapp, parentOrganization: { '@id': `${config.publicUrl}/#org` },
     address: { '@type': 'PostalAddress', addressLocality: 'المدينة المنورة', addressCountry: 'SA', ...(b.address ? { streetAddress: b.address } : {}) },
     ...(b.lat != null ? { geo: { '@type': 'GeoCoordinates', latitude: b.lat, longitude: b.lng } } : {}),
     ...(b.hours ? { openingHoursSpecification: openingHoursSpec(b) } : {}),
     ...(b.maps_url ? { hasMap: b.maps_url } : {}),
+    image: `${config.publicUrl}/og.png`,
   };
 }
 
@@ -340,7 +341,16 @@ ${pageHead({ crumbs: [['/offers', 'العروض']], title: esc(o.title), lead: e
   <p class="label">استفسر عن العرض</p>
   <ul class="sheet-list wide">${bs.map((b) => `<li><span><b>${esc(b.name)}</b>${status(b)}</span>${linkArrow(esc(waLink(b.whatsapp, inquiryText(b, { offer: o }))), 'واتساب', `target="_blank" rel="noopener" data-track="whatsapp_click" data-branch="${b.id}"`)}</li>`).join('')}</ul>
 </section>${contactDialog(branches)}`;
-  return layout({ title: o.title, path: `/offers/${o.slug}`, site, branches, description: o.summary || o.title, body });
+  const jsonLd = {
+    '@context': 'https://schema.org', '@type': 'Offer', name: o.title, description: o.summary || o.title, url: `${config.publicUrl}/offers/${o.slug}`,
+    ...(o.starts_at ? { validFrom: o.starts_at } : {}), ...(o.ends_at ? { validThrough: o.ends_at } : {}),
+    ...(o.image ? { image: config.publicUrl + o.image } : {}),
+    availability: o.phase === 'active' ? 'https://schema.org/InStock' : 'https://schema.org/Discontinued',
+    offeredBy: bs.map((b) => ({ '@id': `${config.publicUrl}/branches/${b.slug}#store` })),
+  };
+  // العرض المنتهي منذ أكثر من شهر يخرج من نتائج البحث ويبقى رابطه يعمل
+  const stale = o.phase === 'ended' && o.ends_at && Date.now() - new Date(o.ends_at).getTime() > 30 * 86400000;
+  return layout({ title: o.title, path: `/offers/${o.slug}`, site, branches, description: o.summary || o.title, body, jsonLd, image: o.image || null, noindex: stale });
 }
 
 // ———————————————————— الاشتراك ————————————————————
@@ -504,5 +514,5 @@ export function privacyPage({ site, branches }) {
 export function notFoundPage({ site, branches }) {
   const body = `<section class="center-page"><div class="nf">${arch('bags', { draw: true })}</div>
     <h1>هذه الصفحة غير موجودة</h1><p>ربما تغير الرابط أو انتهى العرض.</p><div class="row-links center">${linkArrow('/', 'الرئيسية')}${linkArrow('/offers', 'العروض')}</div></section>`;
-  return layout({ title: 'غير موجودة', path: '/404', site, branches, body, bodyClass: 'page-form' });
+  return layout({ title: 'غير موجودة', path: '/404', site, branches, body, bodyClass: 'page-form', noindex: true });
 }

@@ -63,13 +63,13 @@ export function routeTicket(db, { branchId, sectionId, topic }) {
 
 export function createTicket(db, input, files = [], { source = 'web' } = {}) {
   const errors = {};
-  const type = input.type in TICKET_TYPES ? input.type : null;
+  const type = Object.hasOwn(TICKET_TYPES, input.type) ? input.type : null;
   if (!type) errors.type = 'اختر نوع الملاحظة';
   const branchId = Number(input.branch) || null;
   const branch = branchId ? getBranch(db, { id: branchId }) : null;
   if (!branch) errors.branch = 'اختر الفرع';
   const sectionId = Number(input.section) || null;
-  const topic = input.topic in TOPICS ? input.topic : null;
+  const topic = Object.hasOwn(TOPICS, input.topic) ? input.topic : null;
   const rating = input.rating ? Math.max(1, Math.min(5, Number(input.rating))) : null;
   const body = String(input.body || '').trim().slice(0, 3000);
   if (!body && !rating) errors.body = 'اكتب ملاحظتك أو اختر تقييمًا';
@@ -90,7 +90,9 @@ export function createTicket(db, input, files = [], { source = 'web' } = {}) {
   if (images.length > config.uploads.maxTicketImages) errors.images = 'ثلاث صور بحد أقصى';
   if (Object.keys(errors).length) fail(400, 'راجع الحقول المظللة', errors);
 
-  const priority = input.priority in PRIORITY ? input.priority : priorityFor(type, rating);
+  // الأولوية وربط التقييم يحددهما الموظف فقط؛ النموذج العام لا يستطيع رفع بلاغه إلى "عاجل"
+  const staff = source !== 'web' && source !== 'qr';
+  const priority = staff && Object.hasOwn(PRIORITY, input.priority) ? input.priority : priorityFor(type, rating);
   const positive = type === 'experience' && rating != null && rating >= 4 && !wantsContact;
   const route = routeTicket(db, { branchId, sectionId, topic });
   const now = new Date();
@@ -103,7 +105,7 @@ export function createTicket(db, input, files = [], { source = 'web' } = {}) {
       contact_consent_at, qr_code, review_id, status, priority, assignee_id, due_at, close_reason)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
       ref, trackKey, type, source, branchId, sectionId, topic, rating, body || '—', String(input.name || '').trim().slice(0, 80) || null,
-      phone || null, wantsContact && phone ? 1 : 0, wantsContact && phone ? sqlNow(now) : null, input.qr || null, input.review_id || null,
+      phone || null, wantsContact && phone ? 1 : 0, wantsContact && phone ? sqlNow(now) : null, String(input.qr || '').slice(0, 16) || null, staff ? Number(input.review_id) || null : null,
       positive ? 'closed' : route.assigneeId ? 'assigned' : 'new', priority, positive ? null : route.assigneeId,
       positive || !wantsContact && type === 'suggestion' ? null : sqlNow(dueAt(db, branch, priority, now)),
       positive ? 'تقييم إيجابي للاطلاع' : null);

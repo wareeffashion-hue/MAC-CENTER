@@ -328,6 +328,18 @@ const SCHEMA = [
     checked_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
   `,
+  // فهارس للاستعلامات المتكررة في القوائم والتقارير
+  `
+  CREATE INDEX IF NOT EXISTS ticket_events_ticket ON ticket_events(ticket_id, at);
+  CREATE INDEX IF NOT EXISTS attachments_ticket ON attachments(ticket_id);
+  CREATE INDEX IF NOT EXISTS tickets_qr ON tickets(qr_code);
+  CREATE INDEX IF NOT EXISTS tickets_created ON tickets(created_at);
+  CREATE INDEX IF NOT EXISTS intents_qr ON subscription_intents(qr_code, status);
+  CREATE INDEX IF NOT EXISTS reviews_branch_state ON reviews(branch_id, state);
+  CREATE INDEX IF NOT EXISTS sub_events_contact ON subscription_events(contact_id, at);
+  CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
+  CREATE INDEX IF NOT EXISTS events_qr ON events(qr_code, name);
+  `,
 ];
 
 export function openDb(file = join(config.dataDir, 'mac-center.db')) {

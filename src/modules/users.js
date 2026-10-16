@@ -19,11 +19,15 @@ export function saveUser(db, id, input) {
   const branchIds = JSON.stringify((input.branchIds || []).map(Number).filter(Boolean));
   const dup = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
   if (dup && dup.id !== id) fail(400, 'البريد مستخدم', { email: 'مستخدم لحساب آخر' });
-  const wa = input.wa_phone ? String(input.wa_phone).replace(/\D/g, '') : null;
+  const wa = input.wa_phone ? String(input.wa_phone).replace(/\D/g, '') || null : null;
   if (id) {
-    db.prepare('UPDATE users SET name=?, email=?, role=?, branch_ids=?, active=?, wa_phone=? WHERE id=?')
-      .run(name, email, input.role, branchIds, input.active === false ? 0 : 1, wa, id);
-    if (input.password) db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashPassword(input.password), id);
+    // غياب الحقل يبقي الرقم الحالي، والقيمة الفارغة تحذفه
+    db.prepare('UPDATE users SET name=?, email=?, role=?, branch_ids=?, active=?, wa_phone=CASE WHEN ? THEN ? ELSE wa_phone END WHERE id=?')
+      .run(name, email, input.role, branchIds, input.active === false ? 0 : 1, input.wa_phone === undefined ? 0 : 1, wa, id);
+    if (input.password) {
+      db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashPassword(input.password), id);
+      db.prepare('DELETE FROM sessions WHERE user_id = ?').run(id); // تغيير كلمة المرور يخرج الحساب من كل الأجهزة
+    }
     if (input.active === false) db.prepare('DELETE FROM sessions WHERE user_id = ?').run(id);
   } else {
     id = Number(db.prepare('INSERT INTO users (name, email, role, branch_ids, password, wa_phone) VALUES (?, ?, ?, ?, ?, ?)')

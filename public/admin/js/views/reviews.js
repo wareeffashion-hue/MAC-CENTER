@@ -1,4 +1,4 @@
-import { api, esc, ic, can, state, badge, ago, fmtD, nf, emptyState, options, run, stars, drawer, closeDrawer, modal } from '../core.js';
+import { api, esc, ic, can, state, badge, ago, fmtD, nf, emptyState, options, run, stars, drawer, closeDrawer, modal, confirmBox, toast } from '../core.js';
 
 export async function render(view, ctx) {
   const M = state.meta;
@@ -42,7 +42,10 @@ export async function render(view, ctx) {
     const b = e.target.closest('button');
     if (!b) return;
     if (b.dataset.do === 'publish') {
-      const text = el.querySelector('textarea').value;
+      const text = el.querySelector('textarea').value.trim();
+      if (text.length < 10) { toast('اكتب ردًا لا يقل عن 10 أحرف قبل النشر', 'err'); return; }
+      // الرد يُنشر علنًا على Google باسم الفرع، فنعرضه للتأكيد قبل الإرسال
+      if (!await confirmBox('نشر الرد على Google', `سيظهر هذا الرد علنًا تحت التقييم:<blockquote style="margin:12px 0;padding:10px 14px;border-inline-start:3px solid var(--line, #ddd);white-space:pre-wrap">${esc(text)}</blockquote>`, { okLabel: 'نشر الرد' })) return;
       await run(b, () => api(`/reviews/${id}/reply`, { method: 'POST', body: { text } }), { ok: 'نشر الرد' });
       ctx.refreshBadges(); render(view, ctx);
     } else if (b.dataset.do === 'save') {

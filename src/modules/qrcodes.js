@@ -18,7 +18,7 @@ export function saveQr(db, id, input) {
   if (!label) fail(400, 'اسم الملصق مطلوب', { label: 'مطلوب' });
   if (!(input.purpose in QR_PURPOSE)) fail(400, 'حدد الغرض', { purpose: 'مطلوب' });
   const target = input.purpose === 'custom' ? String(input.target || '') : null;
-  if (input.purpose === 'custom' && !/^\/[\w\-/?=&%.]*$/.test(target)) fail(400, 'الوجهة المخصصة مسار داخلي يبدأ بـ /', { target: 'مثال: /offers' });
+  if (input.purpose === 'custom' && (!/^\/[\w\-/?=&%.]*$/.test(target) || target.startsWith('//'))) fail(400, 'الوجهة المخصصة مسار داخلي يبدأ بـ /', { target: 'مثال: /offers' });
   const vals = [label, Number(input.branch_id) || null, String(input.location || ''), input.purpose, target, input.active === false ? 0 : 1];
   if (id) db.prepare('UPDATE qr_codes SET label=?, branch_id=?, location=?, purpose=?, target=?, active=? WHERE id=?').run(...vals, id);
   else {

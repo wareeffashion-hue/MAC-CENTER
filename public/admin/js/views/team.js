@@ -28,7 +28,7 @@ function edit(u, after) {
     <div class="form-row"><label class="field"><span>الاسم</span><input name="name" required value="${esc(u?.name || '')}"></label>
       <label class="field"><span>البريد</span><input name="email" type="email" dir="ltr" required value="${esc(u?.email || '')}"></label></div>
     <div class="form-row"><label class="field"><span>الدور</span><select name="role">${options(M.roles, u?.role || 'agent')}</select></label>
-      <label class="field"><span>واتساب للتنبيهات والاختبار</span><input name="wa_phone" dir="ltr" placeholder="9665xxxxxxxx"></label></div>
+      <label class="field"><span>واتساب للتنبيهات والاختبار</span><input name="wa_phone" dir="ltr" placeholder="9665xxxxxxxx" value="${esc(u?.waPhone || '')}"></label></div>
     <div class="field"><span>الفروع المخولة</span>${checks('branchIds', M.allBranches, u?.branchIds || [])}<span class="hint">مدير النظام يرى كل الفروع. التسويق دون فروع = مستوى العلامة.</span></div>
     <label class="field"><span>${u ? 'كلمة مرور جديدة (اتركها فارغة للإبقاء)' : 'كلمة المرور'}</span><input name="password" type="password" autocomplete="new-password" dir="ltr" ${u ? '' : 'required'} minlength="10"><span class="hint">10 أحرف على الأقل.</span></label>
     ${u ? `<label class="switch"><input type="checkbox" name="active" ${u.active ? 'checked' : ''}><i></i>الحساب فعال</label>` : ''}
@@ -38,7 +38,7 @@ function edit(u, after) {
     e.preventDefault();
     const b = formData(form);
     if (!b.password) delete b.password;
-    if (!b.wa_phone) delete b.wa_phone;
+    b.wa_phone = b.wa_phone || ''; // فارغ = حذف الرقم صراحة
     await run(form.querySelector('button'), () => api(u ? `/users/${u.id}` : '/users', { method: u ? 'PUT' : 'POST', body: b }), { ok: 'حفظ الموظف', form });
     await refreshMeta(); closeDrawer(); after();
   };

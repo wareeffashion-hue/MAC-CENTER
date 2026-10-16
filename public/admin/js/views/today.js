@@ -16,7 +16,7 @@ export async function render(view) {
   ];
   if (d.reviews) kpis.push({ lbl: 'تقييمات تحتاج ردًا', val: d.reviews.pending, sub: d.reviews.escalated ? `${d.reviews.escalated} مصعّدة` : 'على Google', icon: 'star', href: '#/reviews', tone: d.reviews.escalated ? 'bad' : '' });
   if (d.campaigns) kpis.push({ lbl: 'المشتركون النشطون', val: d.campaigns.subscribers, sub: `+${d.campaigns.newSubscribers7d} خلال 7 أيام`, icon: 'users', href: '#/subscribers', spark: spark('subscribers') });
-  const shown = kpis.slice(0, 4);
+  const shown = kpis; // الشبكة تلتف، فلا نسقط بطاقة المشتركين حين تظهر بطاقة التقييمات
 
   view.innerHTML = `
   <div class="bar" style="margin-bottom:20px"><div><h2 style="font-size:24px">${greet}، ${esc(state.me.name.split(' ')[0])}</h2>

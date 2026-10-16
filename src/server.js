@@ -5,7 +5,7 @@ import { handleInbound } from './modules/whatsapp.js';
 import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { openDb } from './db.js';
-import { Router, HttpError, sendHtml, sendJson, serveStatic, securityHeaders } from './http.js';
+import { Router, HttpError, sendHtml, sendJson, serveStatic, securityHeaders, esc } from './http.js';
 import { seedCatalog } from './modules/catalog.js';
 import { ensureAdmin } from './modules/users.js';
 import { publicRoutes } from './routes/public.js';
@@ -22,10 +22,12 @@ export function createApp(db) {
   apiRoutes(router, db);
 
   return async function handle(req, res) {
-    const url = new URL(req.url, 'http://x');
-    const path = decodeURIComponent(url.pathname);
     securityHeaders(res);
+    let url, path = '';
     try {
+      url = new URL(req.url, 'http://x');
+      // رابط بترميز تالف مثل /%E0 كان يرمي استثناءً خارج try فيُسقط الخادم كله
+      try { path = decodeURIComponent(url.pathname); } catch { throw new HttpError(400, 'رابط غير صالح'); }
       if ((req.method === 'GET' || req.method === 'HEAD') && path.startsWith('/uploads/')) {
         if (serveStatic(req, res, uploadsDir, path.slice('/uploads/'.length), { immutable: true })) return;
       }
@@ -36,7 +38,9 @@ export function createApp(db) {
       // مسارات تغير الحالة من المتصفح يجب أن تأتي من نفس الموقع
       if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && !path.startsWith('/api/webhooks/')) {
         const origin = req.headers.origin;
-        if (origin && new URL(origin).host !== req.headers.host && origin !== config.publicUrl) throw new HttpError(403, 'مصدر الطلب غير مسموح');
+        let host = null;
+        try { host = origin ? new URL(origin).host : null; } catch { /* Origin: null أو قيمة تالفة */ }
+        if (origin && host !== req.headers.host && origin !== config.publicUrl) throw new HttpError(403, 'مصدر الطلب غير مسموح');
       }
       const m = router.match(req.method, path);
       if (!m) {
@@ -58,7 +62,7 @@ export function createApp(db) {
       if (path.startsWith('/api/') || String(req.headers.accept || '').includes('application/json')) {
         sendJson(res, status, { error: status === 500 ? 'حدث خطأ غير متوقع' : err.message, fields: err.fields });
       } else {
-        sendHtml(res, status, `<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>خطأ</title><body style="font-family:system-ui;padding:40px"><h1>${status === 500 ? 'حدث خطأ غير متوقع' : err.message}</h1><a href="/">الرئيسية</a></body></html>`);
+        sendHtml(res, status, `<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>خطأ</title><body style="font-family:system-ui;padding:40px"><h1>${esc(status === 500 ? 'حدث خطأ غير متوقع' : err.message)}</h1><a href="/">الرئيسية</a></body></html>`);
       }
     }
   };
@@ -73,12 +77,23 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   if (!db.prepare("SELECT 1 FROM users WHERE role = 'admin'").get()) {
     console.warn('لا يوجد حساب مدير. شغّل: npm run create-admin -- البريد كلمة_المرور');
   }
+  // شبكة أمان أخيرة: خطأ غير ملتقط في مهمة أو طلب يُسجل ولا يوقف الموقع
+  process.on('unhandledRejection', (e) => console.error('unhandledRejection', e));
   const server = createServer(createApp(db));
   server.listen(config.port, () => console.log(`ماك سنتر يعمل على ${config.publicUrl} (المنفذ ${config.port})`));
-  startJobs(db);
+  const jobs = startJobs(db);
   setInboundHandler((m) => handleInbound(db, m));
   resumeWaQr();
-  const stop = () => { server.close(); db.close(); process.exit(0); };
+  let closing = false;
+  const stop = async () => {
+    if (closing) return;
+    closing = true;
+    const closed = new Promise((r) => server.close(r));
+    server.closeIdleConnections?.();
+    await Promise.race([Promise.all([closed, jobs.stop()]), new Promise((r) => setTimeout(r, 12_000))]);
+    try { db.close(); } catch { /* */ }
+    process.exit(0);
+  };
   process.on('SIGTERM', stop);
   process.on('SIGINT', stop);
 }

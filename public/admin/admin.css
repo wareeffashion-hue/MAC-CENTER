@@ -60,6 +60,7 @@ svg { display: block; flex: none; }
 .top-actions { margin-inline-start: auto; display: flex; align-items: center; gap: 8px; }
 .burger { display: none; }
 .view { padding: 24px 28px 60px; animation: view-in 260ms var(--ease-out); }
+.view.loading { opacity: .45; pointer-events: none; transition: opacity .2s .12s; }
 @keyframes view-in { from { opacity: 0; transform: translateY(6px); } }
 
 /* ——— البطاقات ——— */

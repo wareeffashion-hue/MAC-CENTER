@@ -356,7 +356,7 @@ export function apiRoutes(router, db) {
   });
 
   // ————— التقارير والسجل والإعدادات —————
-  router.get('/api/reports/marketing', anyOf('campaigns', 'reports'), (req, res) => ok(res, Rep.marketingReport(db, { days: Number(req.query.days) || 30, branchId: Number(req.query.branch) || null })));
+  router.get('/api/reports/marketing', anyOf('campaigns', 'reports'), (req, res) => ok(res, Rep.marketingReport(db, { days: Number(req.query.days) || 30, branchId: Number(req.query.branch) || null, scope: A.branchScope(req.user) })));
   router.get('/api/reports/service', anyOf('tickets', 'reports'), (req, res) => ok(res, Rep.serviceReport(db, req.user, { days: Number(req.query.days) || 30 })));
   router.get('/api/audit', auth('audit'), (req, res) => {
     ok(res, { items: db.prepare('SELECT a.*, u.name user_name FROM audit_log a LEFT JOIN users u ON u.id = a.user_id ORDER BY a.id DESC LIMIT 300').all() });

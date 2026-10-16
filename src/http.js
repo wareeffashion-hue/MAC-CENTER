@@ -34,7 +34,8 @@ export class Router {
       if (!m) continue;
       if (r.method !== method && !(method === 'HEAD' && r.method === 'GET')) { allowed = true; continue; }
       const params = {};
-      r.keys.forEach((k, i) => { params[k] = decodeURIComponent(m[i + 1]); });
+      // المسار مفكوك الترميز مسبقًا في server.js
+      r.keys.forEach((k, i) => { params[k] = m[i + 1]; });
       return { handlers: r.handlers, params };
     }
     return allowed ? { notAllowed: true } : null;
@@ -45,7 +46,7 @@ export function parseCookies(header = '') {
   const out = {};
   for (const part of header.split(';')) {
     const i = part.indexOf('=');
-    if (i > 0) out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+    if (i > 0) { const v = part.slice(i + 1).trim(); try { out[part.slice(0, i).trim()] = decodeURIComponent(v); } catch { out[part.slice(0, i).trim()] = v; } }
   }
   return out;
 }
@@ -221,13 +222,19 @@ export function rateLimit(key, { max, windowMs }) {
   b.count += 1;
   return b.count <= max;
 }
+// هل بلغ المفتاح الحد دون احتساب محاولة جديدة
+export function isLimited(key, max) {
+  const b = buckets.get(key);
+  return !!b && b.reset >= Date.now() && b.count >= max;
+}
 setInterval(() => {
   const now = Date.now();
   for (const [k, b] of buckets) if (b.reset < now) buckets.delete(k);
 }, 60_000).unref();
 
 export function clientIp(req) {
-  const fwd = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  // البروكسي يضيف عنوان الزائر الحقيقي في آخر القائمة، وأولها يكتبه الزائر نفسه فلا يُوثق به
+  const fwd = String(req.headers['x-forwarded-for'] || '').split(',').at(-1).trim();
   return fwd || req.socket.remoteAddress || 'unknown';
 }
 
@@ -235,6 +242,7 @@ export function securityHeaders(res) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('X-Frame-Options', 'DENY');
+  if (process.env.NODE_ENV === 'production') res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",

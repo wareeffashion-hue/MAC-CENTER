@@ -65,15 +65,18 @@ export function today(db, user) {
   return out;
 }
 
-export function marketingReport(db, { days = 30, branchId = null } = {}) {
+export function marketingReport(db, { days = 30, branchId = null, scope = null } = {}) {
+  // مدير الفرع يرى فرعه فقط: يُفرض الفرع ضمن نطاقه، ولا تظهر له حملات العلامة وتكاليفها
+  if (scope && !scope.includes(branchId)) branchId = scope[0] ?? -1;
   const from = sqlNow(new Date(Date.now() - days * 86400000));
   const ev = (name) => db.prepare(`SELECT COUNT(*) n FROM events WHERE name = ? AND at >= ?${branchId ? ' AND branch_id = ?' : ''}`).get(name, from, ...(branchId ? [branchId] : [])).n;
   const funnel = ['qr_visit', 'subscribe_start', 'subscribe_confirmed', 'offer_view', 'unsubscribe'].map((k) => ({ key: k, name: EVENT_NAMES[k], n: ev(k) }));
-  const subs = db.prepare("SELECT branch_ids, section_ids, source_qr FROM subscriptions WHERE status = 'active'").all();
+  const subs = db.prepare("SELECT branch_ids, section_ids, source_qr FROM subscriptions WHERE status = 'active'").all()
+    .filter((s) => !scope || json.parse(s.branch_ids, []).some((id) => scope.includes(id)));
   const interest = {}, branches = {}, sources = {};
   for (const s of subs) {
     for (const id of json.parse(s.section_ids, [])) interest[id] = (interest[id] || 0) + 1;
-    for (const id of json.parse(s.branch_ids, [])) branches[id] = (branches[id] || 0) + 1;
+    for (const id of json.parse(s.branch_ids, [])) if (!scope || scope.includes(id)) branches[id] = (branches[id] || 0) + 1;
     sources[s.source_qr || 'web'] = (sources[s.source_qr || 'web'] || 0) + 1;
   }
   const msg = Object.fromEntries(db.prepare('SELECT m.status, COUNT(*) n FROM messages m JOIN campaigns c ON c.id = m.campaign_id WHERE c.created_at >= ? GROUP BY m.status').all(from).map((r) => [r.status, r.n]));
@@ -86,7 +89,7 @@ export function marketingReport(db, { days = 30, branchId = null } = {}) {
       (SELECT COUNT(*) FROM events e JOIN offers o ON o.slug = e.ref WHERE e.name = 'offer_view' AND o.id = c.offer_id AND e.at >= c.created_at) views
     FROM campaigns c WHERE c.created_at >= ? ORDER BY c.created_at DESC LIMIT 20`).all(from);
   return {
-    funnel, active: subs.length, interest, branches, sources, messages: msg, campaigns,
+    funnel, active: subs.length, interest, branches, sources, messages: scope ? {} : msg, campaigns: scope ? [] : campaigns,
     stopped: db.prepare("SELECT COUNT(*) n FROM subscription_events WHERE kind = 'stopped' AND at >= ?").get(from).n,
   };
 }

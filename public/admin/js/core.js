@@ -213,7 +213,8 @@ export function confirmBox(title, text, { danger, okLabel = 'تأكيد' } = {})
 addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   const m = $$('.modal').pop();
-  if (m) { m.remove(); return; }
+  // نمر عبر زر الإغلاق حتى يكتمل وعد confirmBox بالرفض بدل أن يبقى معلقًا
+  if (m) { const x = m.querySelector('[data-x]'); if (x) x.click(); else m.remove(); return; }
   closeDrawer();
 });
 

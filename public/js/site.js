@@ -58,6 +58,7 @@
       const multi = kf.length > 2;
       const frames = multi ? kf.map((f) => ({ easing: o.easing || OUT, ...f })) : kf;
       const a = el.animate(frames, { fill: 'both', ...o, easing: multi ? 'linear' : (o.easing || OUT) });
+      a.playbackRate = 1.4; // المقدمة كلها أسرع بنسبة 40%: نحو 3 ثوان بدل 4.3 قبل ظهور المحتوى
       introAnims.push(a);
       return a;
     };

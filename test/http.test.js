@@ -35,6 +35,11 @@ test('الصفحات العامة تعمل وتحمل بيانات منظمة و
   assert.equal((await fetch(base + '/nope')).status, 404);
 });
 
+test('رابط بترميز تالف يعيد 400 ولا يسقط الخادم', async () => {
+  for (const p of ['/%E0', '/uploads/%', '/api/%zz']) assert.equal((await fetch(base + p)).status, 400, p);
+  assert.equal((await fetch(base + '/')).status, 200);
+});
+
 test('رؤوس الأمان مضبوطة', async () => {
   const r = await fetch(base + '/');
   assert.match(r.headers.get('content-security-policy'), /script-src 'self'/);
@@ -102,4 +107,12 @@ test('رمز QR يحتفظ برابطه ويوجه حسب الغرض', async () 
 test('مولد QR ينتج المقاسات الصحيحة', () => {
   assert.equal(qrMatrix('hi').length, 21);
   assert.equal(qrMatrix('https://maccenter.com.sa/q/ABCDEF').length, 29);
+});
+
+test('عنوان الزائر يؤخذ من آخر X-Forwarded-For، وQR المخصص لا يقبل روابط خارجية', async () => {
+  const { clientIp } = await import('../src/http.js');
+  assert.equal(clientIp({ headers: { 'x-forwarded-for': '1.1.1.1, 9.9.9.9' }, socket: {} }), '9.9.9.9');
+  const { saveQr } = await import('../src/modules/qrcodes.js');
+  assert.throws(() => saveQr(db, null, { label: 'x', purpose: 'custom', target: '//evil.com' }), (e) => e.status === 400);
+  assert.equal(saveQr(db, null, { label: 'y', purpose: 'custom', target: '/offers' }).target, '/offers');
 });
