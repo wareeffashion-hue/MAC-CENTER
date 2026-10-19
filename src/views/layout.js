@@ -11,7 +11,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public')
 const version = (file) => {
   try { return createHash('sha1').update(readFileSync(join(root, file))).digest('hex').slice(0, 10); } catch { return '0'; }
 };
-export const ASSET_V = { css: version('css/site.css'), js: version('js/site.js') };
+export const ASSET_V = { css: version('css/site.css'), js: version('js/site.js'), sting: version('js/sting.js') };
 
 const inlineSvg = (file, cls) => readFileSync(join(root, 'img', file), 'utf8').replace('<svg ', `<svg class="${cls}" `).replace(/<style>.*?<\/style>/, '');
 export const LOGO_H = inlineSvg('logo-horizontal.svg', 'logo');
@@ -77,6 +77,7 @@ ${noindex ? '<meta name="robots" content="noindex">' : `<link rel="canonical" hr
 <link rel="preload" href="/fonts/gamila-bold.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/gamila-light.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/css/site.css?v=${ASSET_V.css}">
+<script src="/js/sting.js?v=${ASSET_V.sting}" defer></script>
 <script src="/js/site.js?v=${ASSET_V.js}" defer></script>
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, '\\u003c')}</script>` : ''}
 </head>

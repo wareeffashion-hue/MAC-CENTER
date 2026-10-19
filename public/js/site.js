@@ -48,6 +48,15 @@
   function playIntro() {
     if (!intro || introPlaying) return;
     if (reduce || !Element.prototype.animate) { finishIntro(); return; }
+    // «عربة الضوء»: الافتتاحية السينمائية الحية حين يدعمها المتصفح، والقديمة احتياطًا
+    if (window.mcSting?.ok) {
+      introPlaying = true;
+      intro.hidden = true;
+      document.body.style.overflow = 'hidden';
+      const target = $('.brand .logo')?.getBoundingClientRect();
+      window.mcSting.play({ target, onReveal: finishIntro });
+      return;
+    }
     introPlaying = true;
     intro.hidden = false;
     $$('.intro-win .arch', intro).forEach(drive);
@@ -122,6 +131,8 @@
       playIntro();
     });
   }
+  // شعار التذييل يتكون من عربات صغيرة حين يظهر
+  if (!reduce) window.mcSting?.form($('.ftr-word'));
   // نبضة العجلات عند الضغط على الشعار في أي صفحة
   $$('.brand').forEach((b) => b.addEventListener('pointerdown', () => { b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }));
 
