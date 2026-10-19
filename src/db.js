@@ -495,6 +495,62 @@ const SCHEMA = [
   );
   CREATE INDEX idx_erp_day ON erp_invoices(branch_id, day);
   `,
+  // قسائم الإهداء الإلكترونية
+  `
+  CREATE TABLE gift_orders (
+    id INTEGER PRIMARY KEY,
+    key TEXT NOT NULL UNIQUE,
+    amount REAL NOT NULL,
+    design TEXT NOT NULL,
+    sender_name TEXT,
+    recipient_name TEXT,
+    recipient_phone TEXT,
+    buyer_phone TEXT NOT NULL,
+    message TEXT,
+    deliver TEXT NOT NULL CHECK (deliver IN ('wa','self')),
+    send_at TEXT,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','paid','failed','cancelled')),
+    provider TEXT NOT NULL,
+    provider_id TEXT,
+    paid_at TEXT,
+    card_id INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX idx_gift_orders_status ON gift_orders(status, created_at);
+  CREATE TABLE gift_cards (
+    id INTEGER PRIMARY KEY,
+    code TEXT NOT NULL UNIQUE,
+    token TEXT NOT NULL UNIQUE,
+    order_id INTEGER REFERENCES gift_orders(id),
+    amount REAL NOT NULL,
+    balance REAL NOT NULL,
+    design TEXT NOT NULL,
+    sender_name TEXT,
+    recipient_name TEXT,
+    recipient_phone TEXT,
+    message TEXT,
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','cancelled')),
+    source TEXT NOT NULL DEFAULT 'online' CHECK (source IN ('online','branch')),
+    branch_id INTEGER REFERENCES branches(id),
+    send_at TEXT,
+    delivered_at TEXT,
+    expires_at TEXT NOT NULL,
+    pass_updated_at TEXT,
+    created_by INTEGER REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE gift_txns (
+    id INTEGER PRIMARY KEY,
+    card_id INTEGER NOT NULL REFERENCES gift_cards(id),
+    kind TEXT NOT NULL CHECK (kind IN ('issue','redeem','cancel')),
+    amount REAL NOT NULL,
+    branch_id INTEGER REFERENCES branches(id),
+    ref TEXT,
+    user_id INTEGER REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX idx_gift_txns_card ON gift_txns(card_id);
+  `,
 ];
 
 export function openDb(file = join(config.dataDir, 'mac-center.db')) {

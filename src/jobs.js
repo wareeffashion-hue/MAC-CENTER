@@ -1,6 +1,7 @@
 import { autoCampaigns, materialize, dispatch } from './modules/offers.js';
 import { escalateLate } from './modules/tickets.js';
 import { expireCredits, expireRequests } from './modules/plus.js';
+import { deliverDue, reconcile as reconcileGifts } from './modules/giftcards.js';
 import { syncReviews, purgeStaleReviewContent } from './modules/reviews.js';
 import { driver } from './modules/whatsapp.js';
 import { setIntegrationStatus, maybeSendDailySummary } from './modules/notify.js';
@@ -47,6 +48,9 @@ export function startJobs(db) {
     expireCredits(db);
     db.prepare("UPDATE plus_intents SET status = 'expired' WHERE status = 'awaiting' AND expires_at < datetime('now')").run();
   });
+  // قسائم الإهداء: تسليم المجدول في موعده، ومراجعة الدفعات المعلقة
+  every('gift-delivery', 60_000, () => deliverDue(db));
+  every('gift-reconcile', 5 * 60_000, () => reconcileGifts(db));
   every('reviews', 15 * 60_000, () => syncReviews(db));
   every('purge', 6 * 3600_000, () => {
     purgeStaleReviewContent(db);

@@ -66,5 +66,10 @@ export const config = {
   },
   // النظام المحاسبي يرسل الفواتير إلى /api/webhooks/erp بهذا المفتاح
   erp: { secret: env.ERP_WEBHOOK_SECRET },
+  // بوابة الدفع: mock للتجربة، أو moyasar بمفتاحها السري
+  payments: {
+    driver: env.PAYMENT_DRIVER || (env.MOYASAR_SECRET_KEY ? 'moyasar' : 'mock'),
+    moyasarSecret: env.MOYASAR_SECRET_KEY,
+  },
   uploads: { maxImageBytes: 10 * 1024 * 1024, maxTicketImages: 3 },
 };

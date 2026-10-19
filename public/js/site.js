@@ -543,6 +543,35 @@
     $$('input[name="kind"]', rsv).forEach((r) => r.addEventListener('change', () => { if (notes[r.value]) note.textContent = notes[r.value]; }));
   }
 
+  // ——— قسائم الإهداء: معاينة حية للقسيمة وإظهار حقول التسليم ———
+  const gf = $('[data-gift-form]');
+  if (gf) {
+    let designs = {};
+    try { designs = JSON.parse(gf.dataset.designs); } catch { /* تبقى المعاينة الأولى */ }
+    const face = $('[data-gface]');
+    const val = (n) => gf.querySelector(`[name="${n}"]:checked`)?.value ?? gf.querySelector(`[name="${n}"]`)?.value ?? '';
+    const fmt = (n) => (Number(n) || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
+    const sync = () => {
+      const d = designs[val('design')];
+      if (d && face) { face.style.setProperty('--gbg', d.bg); face.style.setProperty('--gfg', d.fg); face.style.setProperty('--gac', d.accent); $('[data-g-title]').textContent = d.title; }
+      const custom = val('amount') === 'custom';
+      $('[data-custom]', gf).hidden = !custom;
+      const amt = custom ? val('customAmount') : val('amount');
+      $('[data-g-amount]').textContent = fmt(amt);
+      $('[data-g-pay]', gf).textContent = fmt(amt);
+      $('[data-g-to]').textContent = val('recipientName') || '…';
+      $('[data-g-from]').textContent = val('senderName') || '…';
+      $('[data-g-msg]').textContent = val('message');
+      const wa = val('deliver') === 'wa';
+      $('[data-wa]', gf).hidden = !wa;
+      $('[data-later]', gf).hidden = !(wa && val('when') === 'later');
+    };
+    gf.addEventListener('input', sync);
+    gf.addEventListener('change', sync);
+    gf.addEventListener('submit', () => gf.querySelector('[type=submit]')?.setAttribute('aria-busy', 'true'));
+    sync();
+  }
+
   // ——— نموذج الملاحظات ———
   const fb = $('[data-feedback]');
   if (fb) {

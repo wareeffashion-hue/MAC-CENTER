@@ -254,7 +254,7 @@ export function securityHeaders(res) {
     'frame-src https://www.google.com https://maps.google.com',
     "frame-ancestors 'none'",
     "base-uri 'self'",
-    "form-action 'self' https://wa.me https://api.whatsapp.com",
+    "form-action 'self' https://wa.me https://api.whatsapp.com https://checkout.moyasar.com https://api.moyasar.com",
   ].join('; '));
 }
 

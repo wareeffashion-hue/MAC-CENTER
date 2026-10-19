@@ -11,6 +11,7 @@ import { ensureAdmin } from './modules/users.js';
 import { publicRoutes } from './routes/public.js';
 import { apiRoutes } from './routes/api.js';
 import { plusRoutes } from './routes/plus.js';
+import { giftRoutes } from './routes/gifts.js';
 import { startJobs } from './jobs.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -22,6 +23,7 @@ export function createApp(db) {
   publicRoutes(router, db);
   apiRoutes(router, db);
   plusRoutes(router, db);
+  giftRoutes(router, db);
 
   return async function handle(req, res) {
     securityHeaders(res);

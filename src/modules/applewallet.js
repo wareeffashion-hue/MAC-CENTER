@@ -8,6 +8,7 @@ import { sign, safeEqual } from '../lib/ids.js';
 import { buildPkpass } from '../lib/pkpass.js';
 import { sqlNow } from '../db.js';
 import { balance, cardUrl, referralUrl, plusSettings } from './plus.js';
+import { DESIGNS, giftUrl, prettyCode } from './giftcards.js';
 
 const C = config.appleWallet;
 const imgDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public', 'img', 'wallet');
@@ -59,6 +60,50 @@ function passJson(db, m) {
   };
 }
 
+// بطاقة قسيمة الإهداء: رصيد القسيمة ورمزها
+const hexRgb = (h) => { const n = parseInt(h.slice(1), 16); return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`; };
+function giftPassJson(db, c) {
+  const d = DESIGNS[c.design] || DESIGNS.general;
+  const serial = giftSerial(c.id);
+  return {
+    formatVersion: 1, passTypeIdentifier: C.passTypeId, teamIdentifier: C.teamId, serialNumber: serial,
+    organizationName: 'ماك سنتر', description: 'قسيمة إهداء ماك سنتر', logoText: d.title,
+    foregroundColor: hexRgb(d.fg), backgroundColor: hexRgb(d.bg), labelColor: hexRgb(d.accent),
+    webServiceURL: `${config.publicUrl}/wallet`, authenticationToken: authToken(serial),
+    expirationDate: new Date(c.expires_at.replace(' ', 'T') + 'Z').toISOString(), voided: c.status !== 'active' || c.balance <= 0,
+    storeCard: {
+      headerFields: [{ key: 'balance', label: 'الرصيد', value: c.balance, currencyCode: 'SAR', changeMessage: 'رصيد قسيمتك الآن %@' }],
+      secondaryFields: [{ key: 'from', label: 'من', value: c.sender_name || 'ماك سنتر' }, { key: 'to', label: 'إلى', value: c.recipient_name || '—' }],
+      auxiliaryFields: [{ key: 'expires', label: 'صالحة حتى', value: c.expires_at.slice(0, 10) }],
+      backFields: [
+        ...(c.message ? [{ key: 'msg', label: 'الرسالة', value: c.message }] : []),
+        { key: 'use', label: 'الاستخدام', value: 'تُستخدم في جميع فروع ماك سنتر وعلى دفعات حتى نفاد الرصيد. أظهر الرمز للكاشير.' },
+        { key: 'link', label: 'القسيمة', value: giftUrl(c), attributedValue: `<a href="${giftUrl(c)}">افتح القسيمة</a>` },
+      ],
+    },
+    barcodes: [{ format: 'PKBarcodeFormatQR', message: c.code, messageEncoding: 'iso-8859-1', altText: prettyCode(c.code) }],
+  };
+}
+export const giftSerial = (id) => `mac-gift-${id}`;
+export function buildGiftPass(db, cardId) {
+  const c = db.prepare('SELECT * FROM gift_cards WHERE id = ?').get(cardId);
+  if (!c) return null;
+  images ||= Object.fromEntries(IMAGES.map((n) => [n, readFileSync(join(imgDir, n))]));
+  return { buffer: buildPkpass({ 'pass.json': Buffer.from(JSON.stringify(giftPassJson(db, c))), ...images }, C), updatedAt: c.pass_updated_at || c.created_at };
+}
+export function buildBySerial(db, serial) {
+  const g = /^mac-gift-(\d+)$/.exec(String(serial));
+  if (g) return buildGiftPass(db, Number(g[1]));
+  const m = memberFromSerial(serial);
+  return m ? buildPass(db, m) : null;
+}
+export function giftPassChanged(db, cardId) {
+  db.prepare('UPDATE gift_cards SET pass_updated_at = ? WHERE id = ?').run(sqlNow(), cardId);
+  if (!walletEnabled()) return;
+  const tokens = db.prepare('SELECT device_id, push_token FROM wallet_devices WHERE serial = ?').all(giftSerial(cardId));
+  if (tokens.length) setImmediate(() => push(db, tokens).catch((e) => console.error('wallet push', e.message)));
+}
+
 export function buildPass(db, memberId) {
   const m = db.prepare("SELECT * FROM members WHERE id = ? AND status = 'active'").get(memberId);
   if (!m) return null;
@@ -77,7 +122,8 @@ export function unregisterDevice(db, deviceId, serial) {
   db.prepare('DELETE FROM wallet_devices WHERE device_id = ? AND serial = ?').run(deviceId, serial);
 }
 export function updatedSerials(db, deviceId, since) {
-  const rows = db.prepare('SELECT d.serial, m.pass_updated_at u FROM wallet_devices d LEFT JOIN members m ON d.serial = \'mac-plus-\' || m.id WHERE d.device_id = ?').all(deviceId);
+  const rows = db.prepare(`SELECT d.serial, COALESCE(m.pass_updated_at, g.pass_updated_at) u FROM wallet_devices d
+    LEFT JOIN members m ON d.serial = 'mac-plus-' || m.id LEFT JOIN gift_cards g ON d.serial = 'mac-gift-' || g.id WHERE d.device_id = ?`).all(deviceId);
   const fresh = rows.filter((r) => !since || (r.u && r.u > since));
   if (!fresh.length) return null;
   return { serialNumbers: fresh.map((r) => r.serial), lastUpdated: rows.reduce((a, r) => (r.u && r.u > a ? r.u : a), since || '') || sqlNow() };

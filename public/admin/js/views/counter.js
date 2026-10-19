@@ -9,7 +9,7 @@ export async function render(view, ctx) {
   const q = ctx.query.get('q') || '';
   view.innerHTML = `
   <section class="card counter-search"><form class="card-b" data-find>
-    <label class="field grow"><span>جوال العميل أو رقم العضوية أو إيصال هدية</span>
+    <label class="field grow"><span>جوال العميل أو رقم العضوية أو قسيمة إهداء أو إيصال هدية</span>
       <input name="q" dir="ltr" inputmode="text" autocomplete="off" placeholder="05xxxxxxxx" value="${esc(q)}" autofocus></label>
     <button class="btn" type="submit">${ic('search')}بحث</button>
   </form></section>
@@ -33,11 +33,43 @@ const intro = () => `<section class="card"><div class="card-b counter-intro">
 
 async function lookup(out, q) {
   out.innerHTML = '<div class="card"><div class="card-b muted">جارٍ البحث…</div></div>';
+  // قسيمة إهداء: GC-XXXX-XXX-XXX (أو ممسوحة من رمز QR دون شرطات)
+  if (/^GC[-\s]?[A-Z0-9]{4}[-\s]?[A-Z0-9]{3}[-\s]?[A-Z0-9]{3}$/i.test(q.trim())) {
+    try {
+      const g = await api(`/gifts/lookup?q=${encodeURIComponent(q)}`);
+      if (!g.card) { out.innerHTML = `<div class="banner">${ic('alert')}<span>لا توجد قسيمة بهذا الرمز</span></div>`; return; }
+      return voucherView(out, g.card);
+    } catch (err) { out.innerHTML = `<div class="banner">${ic('alert')}<span>${esc(err.message)}</span></div>`; return; }
+  }
   let r;
   try { r = await api(`/plus/lookup?q=${encodeURIComponent(q)}`); } catch (err) { out.innerHTML = `<div class="banner">${ic('alert')}<span>${esc(err.message)}</span></div>`; return; }
   if (r.gift) return giftView(out, r.gift);
   if (r.member) return memberView(out, r.member);
   joinView(out, q);
+}
+
+function voucherView(out, c) {
+  const M = state.meta;
+  const myBranches = M.branches.filter((b) => b.active);
+  out.innerHTML = `<section class="card"><div class="card-h"><h3>${ic('gift')} قسيمة إهداء <span class="code">${esc(c.code)}</span></h3>
+    <div class="right">${c.usable ? '<span class="badge g"><i class="dot"></i>صالحة</span>' : `<span class="badge r">${c.status === 'cancelled' ? 'ملغاة' : c.expired ? 'منتهية' : 'رصيدها صفر'}</span>`}</div></div>
+    <div class="card-b grid" style="gap:14px">
+      <div class="mc-bal" style="color:var(--green-dk);border-color:var(--line)"><span>الرصيد المتاح</span><b style="color:var(--green-dk)">${sar(c.balance)}</b></div>
+      <dl class="kv"><dt>القيمة الأصلية</dt><dd>${sar(c.amount)}</dd><dt>إلى</dt><dd>${esc(c.recipientName || '—')}</dd><dt>صالحة حتى</dt><dd>${fmtD(c.expiresAt)}</dd></dl>
+      ${c.usable ? `<form class="form" data-redeem><div class="form-row">
+        <label class="field"><span>الفرع</span><select name="branchId">${options(myBranches, myBranches[0]?.id)}</select></label>
+        <label class="field"><span>المبلغ المخصوم من القسيمة</span><input name="amount" type="number" step="0.01" min="0.01" max="${c.balance}" required dir="ltr" value="${c.balance}"></label>
+        <label class="field"><span>رقم الفاتورة <small class="muted">اختياري</small></span><input name="ref" dir="ltr" maxlength="40"></label></div>
+        <div class="form-actions"><button class="btn" type="submit">${ic('check')}خصم من القسيمة</button></div></form>` : ''}
+      ${c.txns.length > 1 ? `<div class="list">${c.txns.map((t) => `<div class="li"><span class="grow"><span class="t">${{ issue: 'إصدار', redeem: 'استخدام', cancel: 'إلغاء' }[t.kind]}${t.branch ? ` · ${esc(t.branch)}` : ''}</span><span class="s">${fmtDT(t.created_at)}</span></span><b class="num">${sar(t.amount)}</b></div>`).join('')}</div>` : ''}
+    </div></section>`;
+  const f = out.querySelector('[data-redeem]');
+  f?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const r = await run(f.querySelector('[type=submit]'), () => api(`/gifts/${c.id}/redeem`, { method: 'POST', body: formData(f) }), { form: f });
+    toast(`خُصم المبلغ. المتبقي ${sar(r.balance)}`);
+    voucherView(out, r);
+  });
 }
 
 function joinView(out, q) {

@@ -15,6 +15,8 @@ export const EVENT_NAMES = {
   plus_invoice: 'فاتورة عضو MAC+',
   request_created: 'طلب حجز أو استلام',
   look_view: 'فتح صفحة الإطلالات',
+  gift_checkout: 'بدء شراء قسيمة',
+  gift_paid: 'بيع قسيمة إهداء',
 };
 
 export function trackEvent(db, name, { branchId = null, qr = null, ref = null } = {}) {

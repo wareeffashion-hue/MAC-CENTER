@@ -62,7 +62,7 @@ export function plusRoutes(router, db) {
 
   // ————— Apple Wallet —————
   const sendPass = (res, pass) => {
-    res.writeHead(200, { 'Content-Type': 'application/vnd.apple.pkpass', 'Content-Disposition': 'attachment; filename="mac-plus.pkpass"', 'Last-Modified': new Date(pass.updatedAt.replace(' ', 'T') + 'Z').toUTCString(), 'Cache-Control': 'no-store' });
+    res.writeHead(200, { 'Content-Type': 'application/vnd.apple.pkpass', 'Content-Disposition': `attachment; filename="${pass.name || 'mac-plus'}.pkpass"`, 'Last-Modified': new Date(pass.updatedAt.replace(' ', 'T') + 'Z').toUTCString(), 'Cache-Control': 'no-store' });
     res.end(pass.buffer);
   };
   router.get('/plus/card/:token/pass.pkpass', (req, res) => {
@@ -83,7 +83,7 @@ export function plusRoutes(router, db) {
     passGuard(req);
     let b = {};
     try { b = JSON.parse((await readBody(req, 4096)).toString('utf8') || '{}'); } catch { return empty(res, 400); }
-    if (!b.pushToken || !AW.memberFromSerial(req.params.serial)) return empty(res, 400);
+    if (!b.pushToken || !/^mac-(plus|gift)-\d+$/.test(req.params.serial)) return empty(res, 400);
     empty(res, AW.registerDevice(db, req.params.device.slice(0, 100), req.params.serial, String(b.pushToken).slice(0, 200)));
   });
   router.delete('/wallet/v1/devices/:device/registrations/:type/:serial', (req, res) => { passGuard(req); AW.unregisterDevice(db, req.params.device, req.params.serial); empty(res, 200); });
@@ -95,7 +95,7 @@ export function plusRoutes(router, db) {
   });
   router.get('/wallet/v1/passes/:type/:serial', (req, res) => {
     passGuard(req);
-    const pass = AW.buildPass(db, AW.memberFromSerial(req.params.serial));
+    const pass = AW.buildBySerial(db, req.params.serial);
     if (!pass) return empty(res, 404);
     const since = Date.parse(req.headers['if-modified-since'] || '');
     if (since && new Date(pass.updatedAt.replace(' ', 'T') + 'Z').getTime() <= since + 999) return empty(res, 304);
