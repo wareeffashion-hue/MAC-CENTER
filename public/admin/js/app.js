@@ -1,4 +1,5 @@
 import { state, api, esc, $, $$, ic, can, toast, run, ago, initials, closeDrawer } from './core.js';
+import { startLoginArt } from './login-art.js';
 
 // كل شاشة وحدة مستقلة تحمل عند الحاجة؛ إضافة شاشة جديدة = سطر هنا وملف في views
 const ROUTES = [
@@ -174,38 +175,63 @@ async function toggleNotifications() {
 }
 
 // ——— الدخول ———
+let loginArt = null;
 function renderLogin(step = 'password') {
   document.title = 'دخول · لوحة ماك سنتر';
-  $('#app').innerHTML = `<div class="login">
-    <div class="login-box">
-      <form class="login-form" novalidate>
-        <img class="logo" src="/img/logo-horizontal.svg" alt="ماك سنتر">
-        ${step === 'password' ? `
-          <h1>تسجيل الدخول</h1>
-          <p class="muted">لوحة إدارة الفروع والعروض وخدمة العملاء</p>
-          <label class="field"><span>البريد الإلكتروني</span><input name="email" type="email" autocomplete="username" required dir="ltr"></label>
-          <label class="field"><span>كلمة المرور</span><input name="password" type="password" autocomplete="current-password" required dir="ltr"></label>
-          <button class="btn" type="submit">دخول</button>` : `
-          <h1>التحقق الثنائي</h1>
-          <p class="muted">أدخل الرمز المكون من 6 أرقام من تطبيق المصادقة.</p>
-          <label class="field"><span>رمز التحقق</span><input name="code" class="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></label>
-          <button class="btn" type="submit">تحقق</button>`}
-        <p class="err" role="alert" hidden></p>
-      </form>
-    </div>
-    <div class="login-art" aria-hidden="true">
-      <span class="win w1"></span><span class="win w2"></span><span class="win w3"></span><span class="win w4"></span>
-      <svg class="tr" viewBox="0 0 100 100" preserveAspectRatio="none"><path pathLength="1" d="M-5 90 H25 Q30 90 30 85 V60 Q30 55 35 55 H60 Q65 55 65 50 V12 Q65 6 72 6 H105"/></svg>
-      <p class="quote">كل ملاحظة تُتابع، وكل عرض يصل لمن اختاره.</p>
-    </div>
-  </div>`;
+  const h = new Date().getHours();
+  const hello = h < 12 ? 'صباح الخير' : 'مساء الخير';
+  // المسرح يبقى عند الانتقال إلى خطوة التحقق الثنائي، ويُبنى مرة واحدة
+  if (!$('.login')) {
+    $('#app').innerHTML = `<div class="login">
+      <canvas class="login-stage" aria-hidden="true"></canvas>
+      <div class="login-copy" aria-hidden="true">
+        <p class="login-kicker">ماك سنتر · لوحة الإدارة</p>
+        <p class="login-quote"><span>كل ملاحظة تُتابع،</span><span>وكل عرض يصل</span><span class="y">لمن اختاره.</span></p>
+      </div>
+      <div class="login-box"></div>
+    </div>`;
+    loginArt?.stop();
+    loginArt = startLoginArt($('.login-stage'));
+  }
+  const box = $('.login-box');
+  box.innerHTML = `<form class="login-form ${step === '2fa' ? 'is-2fa' : ''}" novalidate>
+      <img class="logo" src="/img/logo-horizontal.svg" alt="ماك سنتر">
+      ${step === 'password' ? `
+        <p class="login-hello">${hello} 👋</p>
+        <h1>سجّل دخولك</h1>
+        <p class="muted">لوحة إدارة الفروع والعروض وخدمة العملاء</p>
+        <label class="lf"><span>البريد الإلكتروني</span><i class="lf-ic">${ic('user', 18)}</i><input name="email" type="email" autocomplete="username" required dir="ltr" placeholder="name@maccenter.com.sa"></label>
+        <label class="lf"><span>كلمة المرور</span><i class="lf-ic">${ic('shield', 18)}</i><input name="password" type="password" autocomplete="current-password" required dir="ltr" placeholder="••••••••••"><button type="button" class="lf-eye" aria-label="إظهار كلمة المرور" aria-pressed="false">${ic('eye', 18)}</button></label>
+        <p class="caps" hidden>${ic('alert', 14)} مفتاح الأحرف الكبيرة مفعّل</p>
+        <button class="btn login-go" type="submit"><span>دخول</span>${ic('arrow', 18)}</button>` : `
+        <p class="login-hello">خطوة أخيرة 🔐</p>
+        <h1>التحقق الثنائي</h1>
+        <p class="muted">أدخل الرمز المكون من 6 أرقام من تطبيق المصادقة.</p>
+        <div class="otp-boxes" dir="ltr">${'<span></span>'.repeat(6)}<input name="code" class="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required aria-label="رمز التحقق"></div>
+        <button class="btn login-go" type="submit"><span>تحقق</span>${ic('arrow', 18)}</button>
+        <button class="login-back" type="button">رجوع لتسجيل الدخول</button>`}
+      <p class="err" role="alert" hidden></p>
+    </form>
+    <p class="login-foot">© ${new Date().getFullYear()} ماك سنتر · المدينة المنورة</p>`;
   const form = $('.login-form');
   const err = $('.err', form);
-  setTimeout(() => $('input', form).focus(), 20);
+  setTimeout(() => $('input', form).focus(), 30);
+  // إظهار كلمة المرور وتنبيه الأحرف الكبيرة
+  const eye = $('.lf-eye', form);
+  eye?.addEventListener('click', () => { const on = form.password.type === 'password'; form.password.type = on ? 'text' : 'password'; eye.setAttribute('aria-pressed', on); eye.classList.toggle('on', on); form.password.focus(); });
+  form.password?.addEventListener('keyup', (e) => { $('.caps', form).hidden = !e.getModifierState?.('CapsLock'); });
+  // خانات رمز التحقق تُملأ بالأرقام المكتوبة
+  const otp = $('.otp', form);
+  if (otp) {
+    const cells = $$('.otp-boxes span', form);
+    const paint = () => { otp.value = otp.value.replace(/\D/g, '').slice(0, 6); cells.forEach((c, i) => { c.textContent = otp.value[i] || ''; c.classList.toggle('cur', i === otp.value.length); }); if (otp.value.length === 6) form.requestSubmit(); };
+    otp.addEventListener('input', paint); paint();
+    $('.login-back', form).addEventListener('click', () => renderLogin('password'));
+  }
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     err.hidden = true;
-    const btn = $('button', form);
+    const btn = $('.login-go', form);
     try {
       btn.setAttribute('aria-busy', 'true');
       if (step === 'password') {
@@ -217,11 +243,16 @@ function renderLogin(step = 'password') {
       const me = await api('/me');
       state.me = me.user; state.env = me;
       state.meta = await api('/meta');
+      // العربة تنطلق خارج الشاشة ثم تُفتح اللوحة
+      form.classList.add('done');
+      await loginArt?.launch();
+      loginArt?.stop(); loginArt = null;
       $('#app').innerHTML = '';
       if (!location.hash || location.hash === '#/login') location.hash = `#/${firstRoute().path}`;
       else route();
     } catch (ex) {
       err.textContent = ex.message; err.hidden = false;
+      form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake');
     } finally { btn.removeAttribute('aria-busy'); }
   });
 }
