@@ -15,7 +15,7 @@ function status(b) {
   return `<span class="st ${s.open ? (s.closingSoon ? 'st-warn' : 'st-open') : 'st-closed'}"><i></i>${esc(s.label)}</span>`;
 }
 
-const linkArrow = (href, text, attrs = '') => `<a class="link-arrow" href="${href}" ${attrs}><span>${text}</span><i aria-hidden="true"></i></a>`;
+export const linkArrow = (href, text, attrs = '') => `<a class="link-arrow" href="${href}" ${attrs}><span>${text}</span><i aria-hidden="true"></i></a>`;
 
 // عنوان قسم تحريري: رقم ثم عنوان، دون شارات أو أيقونات
 function head(n, title, sub = '') {
@@ -262,7 +262,7 @@ function branchLd(b) {
 }
 
 // غلاف الصفحات الداخلية: مساحة خضراء بعنوان كبير ونافذة العربة
-function pageHead({ crumbs = [], title, lead = '', aside = '', kind, item }) {
+export function pageHead({ crumbs = [], title, lead = '', aside = '', kind, item }) {
   return `<section class="p-head">
     <div class="p-head-copy">
       <nav class="crumbs" aria-label="مسار التنقل"><a href="/">الرئيسية</a>${crumbs.map(([h, t]) => `<span>/</span><a href="${h}">${t}</a>`).join('')}</nav>
@@ -359,7 +359,7 @@ ${pageHead({ crumbs: [['/offers', 'العروض']], title: esc(o.title), lead: e
 
 // ———————————————————— الاشتراك ————————————————————
 
-function choiceGroup(name, items, selected, { legend, error }) {
+export function choiceGroup(name, items, selected, { legend, error }) {
   return `<fieldset class="pick ${error ? 'has-error' : ''}" ${error ? `aria-describedby="err-${name}"` : ''}>
     <legend>${legend}</legend>
     ${items.map((it, i) => `<label class="pick-row">
@@ -370,7 +370,7 @@ function choiceGroup(name, items, selected, { legend, error }) {
   </fieldset>`;
 }
 
-function formShell({ title, lead, steps, kind, form, extra = '' }) {
+export function formShell({ title, lead, steps, kind, form, extra = '' }) {
   return `<section class="f-page">
     <aside class="f-aside">
       <div class="f-win">${arch(kind, { draw: true })}</div>

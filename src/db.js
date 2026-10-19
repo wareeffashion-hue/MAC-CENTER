@@ -340,6 +340,125 @@ const SCHEMA = [
   CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
   CREATE INDEX IF NOT EXISTS events_qr ON events(qr_code, name);
   `,
+  // MAC+: العضوية والفواتير والمحفظة والطلبات والإطلالات والضمانات
+  `
+  CREATE TABLE members (
+    id INTEGER PRIMARY KEY,
+    phone TEXT NOT NULL UNIQUE,
+    name TEXT,
+    home_branch_id INTEGER REFERENCES branches(id),
+    ref_code TEXT NOT NULL UNIQUE,
+    referred_by INTEGER REFERENCES members(id),
+    referral_rewarded INTEGER NOT NULL DEFAULT 0,
+    consent_marketing INTEGER NOT NULL DEFAULT 0,
+    control INTEGER NOT NULL DEFAULT 0,
+    source TEXT NOT NULL DEFAULT 'cashier',
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','deleted')),
+    created_by INTEGER REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE plus_intents (
+    id INTEGER PRIMARY KEY,
+    token TEXT NOT NULL UNIQUE,
+    status_key TEXT NOT NULL UNIQUE,
+    name TEXT,
+    branch_id INTEGER,
+    ref_code TEXT,
+    consent INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL CHECK (status IN ('awaiting','confirmed','expired')),
+    member_id INTEGER REFERENCES members(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    expires_at TEXT NOT NULL
+  );
+  CREATE TABLE invoices (
+    id INTEGER PRIMARY KEY,
+    member_id INTEGER NOT NULL REFERENCES members(id),
+    branch_id INTEGER NOT NULL REFERENCES branches(id),
+    ref TEXT NOT NULL,
+    amount REAL NOT NULL,
+    section_ids TEXT NOT NULL DEFAULT '[]',
+    dept_count INTEGER NOT NULL DEFAULT 0,
+    tier_pct REAL NOT NULL DEFAULT 0,
+    reward REAL NOT NULL DEFAULT 0,
+    reward_mode TEXT NOT NULL DEFAULT 'discount' CHECK (reward_mode IN ('discount','wallet')),
+    wallet_used REAL NOT NULL DEFAULT 0,
+    gift_code TEXT UNIQUE,
+    created_by INTEGER REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (branch_id, ref)
+  );
+  CREATE INDEX invoices_member ON invoices(member_id, created_at);
+  CREATE INDEX invoices_created ON invoices(created_at, branch_id);
+  CREATE TABLE wallet_entries (
+    id INTEGER PRIMARY KEY,
+    member_id INTEGER NOT NULL REFERENCES members(id),
+    kind TEXT NOT NULL CHECK (kind IN ('tier','referral','welcome','price','adjust','redeem','expire')),
+    amount REAL NOT NULL,
+    remaining REAL NOT NULL DEFAULT 0,
+    min_invoice REAL NOT NULL DEFAULT 0,
+    invoice_id INTEGER REFERENCES invoices(id),
+    expires_at TEXT,
+    note TEXT,
+    created_by INTEGER REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX wallet_member ON wallet_entries(member_id, expires_at);
+  CREATE TABLE requests (
+    id INTEGER PRIMARY KEY,
+    kind TEXT NOT NULL CHECK (kind IN ('reserve','collect','find')),
+    ref TEXT NOT NULL UNIQUE,
+    member_id INTEGER REFERENCES members(id),
+    phone TEXT NOT NULL,
+    name TEXT,
+    branch_id INTEGER NOT NULL REFERENCES branches(id),
+    section_id INTEGER REFERENCES sections(id),
+    look_id INTEGER,
+    details TEXT NOT NULL,
+    size TEXT,
+    status TEXT NOT NULL CHECK (status IN ('new','confirmed','ready','found','done','cancelled','expired')),
+    hold_until TEXT,
+    pickup_code TEXT,
+    note TEXT,
+    source TEXT NOT NULL DEFAULT 'web',
+    handled_by INTEGER REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX requests_status ON requests(status, branch_id);
+  CREATE INDEX requests_phone ON requests(phone, status);
+  CREATE TABLE looks (
+    id INTEGER PRIMARY KEY,
+    title TEXT NOT NULL,
+    occasion TEXT NOT NULL,
+    audience TEXT NOT NULL,
+    price REAL NOT NULL DEFAULT 0,
+    items TEXT NOT NULL DEFAULT '[]',
+    image TEXT,
+    branch_ids TEXT NOT NULL DEFAULT '[]',
+    active INTEGER NOT NULL DEFAULT 1,
+    sort INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE claims (
+    id INTEGER PRIMARY KEY,
+    kind TEXT NOT NULL CHECK (kind IN ('price','size','gift')),
+    member_id INTEGER REFERENCES members(id),
+    invoice_id INTEGER NOT NULL REFERENCES invoices(id),
+    item TEXT NOT NULL,
+    paid REAL,
+    new_price REAL,
+    credit REAL NOT NULL DEFAULT 0,
+    created_by INTEGER REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE branch_days (
+    branch_id INTEGER NOT NULL REFERENCES branches(id),
+    day TEXT NOT NULL,
+    invoices INTEGER NOT NULL,
+    sales REAL,
+    PRIMARY KEY (branch_id, day)
+  );
+  `,
 ];
 
 export function openDb(file = join(config.dataDir, 'mac-center.db')) {

@@ -1,5 +1,6 @@
 import { autoCampaigns, materialize, dispatch } from './modules/offers.js';
 import { escalateLate } from './modules/tickets.js';
+import { expireCredits, expireRequests } from './modules/plus.js';
 import { syncReviews, purgeStaleReviewContent } from './modules/reviews.js';
 import { driver } from './modules/whatsapp.js';
 import { setIntegrationStatus, maybeSendDailySummary } from './modules/notify.js';
@@ -39,6 +40,12 @@ export function startJobs(db) {
   every('expire-intents', 5 * 60_000, () => {
     db.prepare("UPDATE subscription_intents SET status = 'expired' WHERE status = 'awaiting' AND expires_at < datetime('now')").run();
     db.prepare("DELETE FROM sessions WHERE expires_at < datetime('now')").run();
+  });
+  // MAC+: انتهاء الحجوزات بعد مهلتها، وانتهاء الرصيد الترويجي بعد صلاحيته
+  every('plus-expiry', 5 * 60_000, () => {
+    expireRequests(db);
+    expireCredits(db);
+    db.prepare("UPDATE plus_intents SET status = 'expired' WHERE status = 'awaiting' AND expires_at < datetime('now')").run();
   });
   every('reviews', 15 * 60_000, () => syncReviews(db));
   every('purge', 6 * 3600_000, () => {

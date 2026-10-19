@@ -207,12 +207,12 @@ export function publicRoutes(router, db) {
   // ————— SEO —————
   router.get('/robots.txt', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
-    res.end(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /track/\nDisallow: /preferences/\nDisallow: /subscribe/status/\nSitemap: ${config.publicUrl}/sitemap.xml\n`);
+    res.end(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /track/\nDisallow: /preferences/\nDisallow: /subscribe/status/\nDisallow: /plus/status/\nDisallow: /plus/card/\nDisallow: /gift/\nDisallow: /reserve/done/\nSitemap: ${config.publicUrl}/sitemap.xml\n`);
   });
 
   router.get('/sitemap.xml', (req, res) => {
     const day = (v) => (v ? String(v).slice(0, 10) : null);
-    const urls = [['/'], ['/offers'], ['/subscribe'], ['/feedback'], ['/privacy'],
+    const urls = [['/'], ['/offers'], ['/plus'], ['/occasion'], ['/reserve'], ['/subscribe'], ['/feedback'], ['/privacy'],
       ...listBranches(db).map((b) => [`/branches/${b.slug}`, day(b.updated_at)]),
       ...listOffers(db, { publicOnly: true }).map((o) => [`/offers/${o.slug}`, day(o.updated_at)])];
     res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8' });

@@ -6,6 +6,7 @@ import { fail } from '../http.js';
 import { CONSENT_TEXT, CONSENT_VERSION, waLink } from './catalog.js';
 import { trackEvent } from './events.js';
 import * as WQ from './waqr.js';
+import { handlePlusMessage } from './plus.js';
 
 const INTENT_TTL_MIN = 30;
 const STOP_RE = /^\s*(إيقاف|ايقاف|أوقف|اوقف|إلغاء الاشتراك|الغاء الاشتراك|stop|unsubscribe)\s*$/i;
@@ -238,7 +239,7 @@ function applyStatus(db, st) {
 export async function handleInbound(db, { waId, text, name, eventKey }) {
   const wa = String(waId).replace(/\D/g, '');
   const contact = upsertContact(db, wa, name);
-  let reply = null, outcome = 'message';
+  let reply = null, outcome = 'message', plusReply = null;
 
   const link = LINK_RE.exec(String(text).toUpperCase());
   const sub = db.prepare('SELECT status FROM subscriptions WHERE contact_id = ?').get(contact.id);
@@ -249,6 +250,10 @@ export async function handleInbound(db, { waId, text, name, eventKey }) {
     stopSubscription(db, contact.id, 'whatsapp');
     reply = 'تم إيقاف رسائل العروض. يمكنك الاشتراك مجددًا في أي وقت من موقع ماك سنتر.';
     outcome = 'stopped';
+  } else if ((plusReply = handlePlusMessage(db, wa, text, name))) {
+    // رمز انضمام عضوية MAC+ من الموقع، أو طلب البطاقة والرصيد
+    reply = plusReply;
+    outcome = 'plus';
   } else if (link) {
     const intent = db.prepare('SELECT * FROM subscription_intents WHERE token = ?').get(link[1]);
     if (!intent || intent.status === 'expired' || (intent.status === 'awaiting' && intent.expires_at < sqlNow())) {

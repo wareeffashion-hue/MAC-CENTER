@@ -68,6 +68,7 @@ const ICONS = {
   google: '<path d="M20 12.2c0-.6-.1-1.2-.2-1.7H12v3.3h4.5a4 4 0 0 1-1.7 2.6v2.1h2.8A8.4 8.4 0 0 0 20 12.2zM12 20.5c2.3 0 4.2-.8 5.6-2l-2.8-2.1a5 5 0 0 1-7.6-2.7H4.4v2.2a8.5 8.5 0 0 0 7.6 4.6zM7.2 13.7a5 5 0 0 1 0-3.4V8.1H4.4a8.5 8.5 0 0 0 0 7.6zM12 6.9c1.3 0 2.5.4 3.4 1.3l2.5-2.5A8.5 8.5 0 0 0 4.4 8.1l2.8 2.2A5 5 0 0 1 12 6.9z"/>',
   inbox: '<path d="M3 13l3-8h12l3 8v6H3z"/><path d="M3 13h5l1 3h6l1-3h5"/>',
   user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  cart: '<path d="M2 4h3l2.5 10h11l2-7H7"/><circle cx="9.5" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/><path d="M1 9h3M2 12h3"/>',
   link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
 };
 export function ic(name, size = 18) {
@@ -163,7 +164,7 @@ export function formData(form) {
   for (const el of form.elements) {
     if (!el.name || el.disabled) continue;
     if (el.type === 'checkbox') {
-      if (el.dataset.multi) { (out[el.name] ||= []); if (el.checked) out[el.name].push(isNaN(el.value) ? el.value : Number(el.value)); }
+      if ('multi' in el.dataset) { (out[el.name] ||= []); if (el.checked) out[el.name].push(isNaN(el.value) ? el.value : Number(el.value)); }
       else out[el.name] = el.checked;
     } else if (el.type === 'radio') { if (el.checked) out[el.name] = el.value; }
     else out[el.name] = el.value;

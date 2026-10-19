@@ -11,6 +11,10 @@ export const EVENT_NAMES = {
   google_review_click: 'فتح رابط تقييم Google',
   ticket_created: 'تذكرة أنشئت',
   ticket_resolved: 'تذكرة حلت',
+  plus_join: 'انضمام إلى MAC+',
+  plus_invoice: 'فاتورة عضو MAC+',
+  request_created: 'طلب حجز أو استلام',
+  look_view: 'فتح صفحة الإطلالات',
 };
 
 export function trackEvent(db, name, { branchId = null, qr = null, ref = null } = {}) {

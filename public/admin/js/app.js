@@ -6,6 +6,11 @@ const ROUTES = [
   { path: 'today', title: 'اليوم', icon: 'home', perm: 'dashboard', load: () => import('./views/today.js') },
   { path: 'tickets', title: 'التذاكر', icon: 'ticket', perm: 'tickets', load: () => import('./views/tickets.js'), badge: 'tickets' },
   { path: 'reviews', title: 'تقييمات Google', icon: 'star', perm: 'reviews', load: () => import('./views/reviews.js'), badge: 'reviews' },
+  { group: 'MAC+‎' },
+  { path: 'counter', title: 'نقطة MAC+‎', icon: 'cart', perm: 'plus', load: () => import('./views/counter.js') },
+  { path: 'requests', title: 'الحجز والطلبات', icon: 'clock', perm: 'requests', load: () => import('./views/requests.js'), badge: 'requests' },
+  { path: 'looks', title: 'إطلالات المناسبات', icon: 'gift', perm: 'plus.manage', load: () => import('./views/looks.js') },
+  { path: 'pilot', title: 'تجربة MAC+‎', icon: 'chart', perm: ['plus.reports', 'plus.manage'], load: () => import('./views/pilot.js') },
   { group: 'التسويق' },
   { path: 'offers', title: 'العروض', icon: 'gift', perm: ['offers', 'offers.view'], load: () => import('./views/offers.js') },
   { path: 'campaigns', title: 'الحملات', icon: 'send', perm: 'campaigns', load: () => import('./views/campaigns.js') },
@@ -145,7 +150,7 @@ async function pollBadges() {
   if (!state.me) return;
   try {
     const [me, today] = await Promise.all([api('/me'), can('dashboard') ? api('/dashboard/today') : Promise.resolve(null)]);
-    counts = { tickets: today?.tickets?.new || 0, reviews: today?.reviews?.pending || 0, unread: me.user.unread };
+    counts = { tickets: today?.tickets?.new || 0, reviews: today?.reviews?.pending || 0, requests: me.user.requestsNew || 0, unread: me.user.unread };
     applyBadges();
     if (counts.unread > lastUnread && lastUnread !== 0) $('[data-bell]')?.classList.add('ring');
     setTimeout(() => $('[data-bell]')?.classList.remove('ring'), 800);

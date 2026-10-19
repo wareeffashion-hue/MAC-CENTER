@@ -26,8 +26,9 @@ export const CART = (cls = '') => `<svg class="cart-mark ${cls}" viewBox="${mark
 export const NAV = [
   ['/#departments', 'الأقسام'],
   ['/offers', 'العروض'],
+  ['/plus', 'MAC+‎'],
+  ['/occasion', 'عندك مناسبة؟'],
   ['/#branches', 'الفروع'],
-  ['/#services', 'خدمة العملاء'],
   ['/feedback', 'ملاحظاتك'],
 ];
 
@@ -121,7 +122,7 @@ ${body}
     </div>
     <div>
       <p class="label">الموقع</p>
-      <ul><li><a class="ul" href="/offers">العروض الحالية</a></li><li><a class="ul" href="/subscribe">الاشتراك بالعروض</a></li><li><a class="ul" href="/feedback">الملاحظات والشكاوى</a></li><li><a class="ul" href="/privacy">سياسة الخصوصية</a></li></ul>
+      <ul><li><a class="ul" href="/offers">العروض الحالية</a></li><li><a class="ul" href="/subscribe">الاشتراك بالعروض</a></li><li><a class="ul" href="/plus">عضوية MAC+‎</a></li><li><a class="ul" href="/occasion">عندك مناسبة؟</a></li><li><a class="ul" href="/reserve">احجز واستلم</a></li><li><a class="ul" href="/feedback">الملاحظات والشكاوى</a></li><li><a class="ul" href="/privacy">سياسة الخصوصية</a></li></ul>
     </div>
     <div>
       <p class="label">الخدمة</p>

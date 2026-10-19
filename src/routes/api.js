@@ -53,6 +53,10 @@ export function apiRoutes(router, db) {
     const u = A.publicUser(req.user);
     u.waPhone = req.user.wa_phone;
     u.unread = db.prepare('SELECT COUNT(*) n FROM notifications WHERE user_id = ? AND read_at IS NULL').get(req.user.id).n;
+    if (A.can(req.user, 'requests')) {
+      const scope = A.branchScope(req.user);
+      u.requestsNew = db.prepare("SELECT branch_id FROM requests WHERE status = 'new'").all().filter((r) => scope === null || scope.includes(r.branch_id)).length;
+    }
     ok(res, { user: u, mockWhatsapp: config.whatsapp.driver === 'mock', mockGoogle: config.google.driver === 'mock', publicUrl: config.publicUrl });
   });
   router.put('/api/me', auth(), async (req, res) => {
@@ -159,7 +163,7 @@ export function apiRoutes(router, db) {
   router.put('/api/faqs/:id', auth('faqs'), async (req, res) => ok(res, C.saveFaq(db, id(req), await body(req))));
   router.delete('/api/faqs/:id', auth('faqs'), (req, res) => { db.prepare('DELETE FROM faqs WHERE id = ?').run(id(req)); log(req, 'faq.delete', 'faq', id(req)); ok(res); });
 
-  router.post('/api/uploads', anyOf('sections', 'branches', 'branches.own', 'offers'), async (req, res) => {
+  router.post('/api/uploads', anyOf('sections', 'branches', 'branches.own', 'offers', 'plus.manage'), async (req, res) => {
     const data = await readBody(req, config.uploads.maxImageBytes + 1024);
     const kind = sniffImage(data);
     if (!kind) fail(400, 'الصورة يجب أن تكون JPG أو PNG أو WEBP');

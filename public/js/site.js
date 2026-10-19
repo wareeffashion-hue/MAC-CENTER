@@ -519,10 +519,11 @@
     const poll = async () => {
       if (status.dataset.state !== 'awaiting' || tries++ > 400) return;
       try {
-        const r = await fetch(`/api/public/subscribe/${key}`, { cache: 'no-store' });
+        const r = await fetch(status.dataset.statusUrl || `/api/public/subscribe/${key}`, { cache: 'no-store' });
         const d = await r.json();
         if (d.status && d.status !== status.dataset.state) {
           status.dataset.state = d.status;
+          if (d.cardUrl) $$('[data-card-link]', status).forEach((a) => { a.href = d.cardUrl; });
           $(`[data-when="${d.status}"] h1`, status)?.focus?.();
           return;
         }
@@ -531,6 +532,15 @@
     };
     setTimeout(poll, 1500);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) { tries = Math.max(0, tries - 1); } });
+  }
+
+  // ——— احجز واستلم: وصف نوع الطلب المختار ———
+  const rsv = $('[data-reserve]');
+  if (rsv) {
+    const note = $('[data-kind-note]', rsv);
+    let notes = {};
+    try { notes = JSON.parse(note.dataset.kindNote); } catch { /* يبقى النص الأول */ }
+    $$('input[name="kind"]', rsv).forEach((r) => r.addEventListener('change', () => { if (notes[r.value]) note.textContent = notes[r.value]; }));
   }
 
   // ——— نموذج الملاحظات ———

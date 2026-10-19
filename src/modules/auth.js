@@ -15,9 +15,9 @@ export const ROLES = {
 
 const PERMISSIONS = {
   admin: ['*'],
-  branch_manager: ['dashboard', 'tickets', 'tickets.assign', 'reviews', 'branches.own', 'reports', 'offers.view', 'routing.own', 'qr.view'],
-  agent: ['dashboard', 'tickets'],
-  marketing: ['dashboard', 'offers', 'offers.publish', 'campaigns', 'subscribers', 'subscribers.export', 'reports', 'qr'],
+  branch_manager: ['dashboard', 'tickets', 'tickets.assign', 'reviews', 'branches.own', 'reports', 'offers.view', 'routing.own', 'qr.view', 'plus', 'requests', 'plus.reports'],
+  agent: ['dashboard', 'tickets', 'plus', 'requests'],
+  marketing: ['dashboard', 'offers', 'offers.publish', 'campaigns', 'subscribers', 'subscribers.export', 'reports', 'qr', 'plus.manage', 'plus.reports'],
   reviewer: ['dashboard', 'reviews', 'reviews.reply'],
 };
 
