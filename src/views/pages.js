@@ -63,6 +63,8 @@ function occasionHero() {
 </section>`;
 }
 
+const rail = (stunt) => `<div class="ride-rail" data-ride="${stunt}" aria-hidden="true"></div>`;
+
 export function homePage({ site, branches, sections, offers, faqs, reviews, intro, occasionPreview }) {
   const title = (site.heroTitle || 'اختيارات العائلة في وجهة واحدة').split(' ');
   const cut = Math.max(1, Math.floor(title.length / 2)) - 1;
@@ -198,7 +200,9 @@ export function homePage({ site, branches, sections, offers, faqs, reviews, intr
 
   return layout({
     path: '/', site, branches, jsonLd, intro: { autoplay: intro, sections },
-    body: (occasionActive(occasionPreview) ? occasionHero() : '') + hero + about + departments + offersHtml + branchesHtml + servicesHtml + reviewsHtml + faqHtml + contactDialog(branches),
+    // «رحلة العربة»: مسار بين كل قسمين تؤدي عليه العربة حركة مختلفة مع التمرير
+    body: (occasionActive(occasionPreview) ? occasionHero() : '') + hero + rail('hill') + about + rail('loop') + departments + rail('jump') + offersHtml + rail('wheelie')
+      + branchesHtml + rail('spin') + servicesHtml + reviewsHtml + faqHtml + rail('brake') + contactDialog(branches),
     bodyClass: 'home',
   });
 }
