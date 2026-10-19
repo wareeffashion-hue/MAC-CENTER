@@ -26,6 +26,7 @@ const ROUTES = [
   { path: 'reports', title: 'التقارير', icon: 'chart', perm: ['reports', 'campaigns', 'tickets'], load: () => import('./views/reports.js') },
   { path: 'integrations', title: 'الربط', icon: 'plug', perm: 'integrations', load: () => import('./views/integrations.js') },
   { path: 'audit', title: 'سجل التدقيق', icon: 'log', perm: 'audit', load: () => import('./views/audit.js') },
+  { path: 'readiness', title: 'جاهزية الموقع', icon: 'shield', perm: 'settings', load: () => import('./views/readiness.js') },
   { path: 'settings', title: 'الإعدادات', icon: 'cog', perm: 'settings', load: () => import('./views/settings.js') },
   { path: 'profile', title: 'حسابي', icon: 'user', perm: null, load: () => import('./views/profile.js'), hidden: true },
 ];

@@ -205,7 +205,9 @@ html.js .engine:not(.live) :is(.ec-sp, .ec-wh) { opacity: 0; }
 .hdr.solid .brand .logo { height: 40px; }
 .logo .mc-cart { fill: var(--logo-cart, var(--y)); }
 .logo .mc-word { fill: var(--logo-word, var(--g2)); transition: fill .5s; }
-.nav { display: flex; gap: 34px; font-size: 15px; font-weight: 700; }
+.hdr-start { display: flex; align-items: center; gap: clamp(18px, 2.4vw, 34px); }
+.hdr-start .menu-btn { padding-inline-start: 0; }
+.nav { display: flex; gap: clamp(18px, 2vw, 32px); font-size: 15px; font-weight: 700; }
 .hdr-end { display: flex; justify-content: flex-end; align-items: center; gap: 32px; font-size: 15px; font-weight: 700; }
 .menu-btn { display: inline-flex; align-items: center; gap: 12px; padding: 8px 0; border: 0; background: none; color: inherit; font-weight: 700; font-size: 15px; cursor: pointer; }
 .menu-lines { position: relative; width: 26px; height: 10px; }
@@ -638,9 +640,11 @@ input[type="file"]::file-selector-button { margin-inline-end: 16px; padding: 10p
 }
 
 /* ——— الاستجابة ——— */
-@media (max-width: 1180px) {
+@media (max-width: 1440px) {
   .nav { display: none; }
   .hdr { grid-template-columns: 1fr auto; }
+}
+@media (max-width: 1180px) {
   .svc { grid-template-columns: 1fr 1fr; }
   .svc-i:nth-child(3) { border-inline-start: 0; padding-inline-start: 0; }
   .svc-i:nth-child(n+3) { border-top: 1px solid var(--hair); }

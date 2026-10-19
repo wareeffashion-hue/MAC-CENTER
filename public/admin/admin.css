@@ -447,3 +447,27 @@ a.li:hover { background: var(--soft); }
 @media (max-width: 700px) { .look-row { grid-template-columns: 1fr 1fr; } .counter-search .card-b { flex-wrap: wrap; } }
 .map-row { display: grid; grid-template-columns: minmax(90px, 1fr) minmax(0, 1.4fr); align-items: center; gap: 10px; }
 .map-row > span:first-child { margin: 0; }
+.rd-head .card-b { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.rd-ring { width: 76px; height: 76px; transform: rotate(-90deg); }
+.rd-ring circle { fill: none; stroke: var(--line); stroke-width: 8; }
+.rd-ring .v { stroke: var(--green); stroke-linecap: round; transition: stroke-dashoffset .8s var(--ease-out); }
+.rd-score { display: grid; }
+.rd-score b { font-size: 34px; color: var(--green-dk); line-height: 1.1; }
+.rd-score span { color: var(--ink-3); font-weight: 700; }
+.rd-counts { display: flex; gap: 6px; flex-wrap: wrap; }
+.rd-nav { position: sticky; top: 64px; z-index: 5; display: flex; gap: 6px; flex-wrap: wrap; margin: 16px 0; padding: 8px 0; background: var(--bg); }
+.rd-nav a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-weight: 700; font-size: 13px; color: var(--ink-2); }
+.rd-nav a .count { padding: 0 7px; border-radius: 999px; background: var(--red-bg); color: var(--red); font-size: 11px; }
+.rd-nav a.done { color: var(--green); }
+.rd-group { margin-bottom: 16px; scroll-margin-top: 120px; }
+.rd-n { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--green-dk); color: var(--yellow); font-weight: 700; flex: none; }
+.rd-item { display: flex; gap: 12px; align-items: flex-start; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.rd-item:last-child { border-bottom: 0; }
+.rd-item p { margin: 4px 0 0; }
+.rd-ic { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; flex: none; margin-top: 2px; }
+.rd-ic.g { background: var(--mint); color: var(--green); }
+.rd-ic.y { background: var(--warn-bg); color: var(--warn); }
+.rd-ic.r { background: var(--red-bg); color: var(--red); }
+.rd-t { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rd-steps { margin: 8px 0 0; padding-inline-start: 20px; font-size: 13px; color: var(--ink-2); display: grid; gap: 3px; }
+.rd-item.ok .rd-t b { font-weight: 400; }

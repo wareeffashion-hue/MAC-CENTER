@@ -30,7 +30,7 @@ export const NAV = [
   ['/occasion', 'عندك مناسبة؟'],
   ['/gift-cards', 'قسائم الإهداء'],
   ['/#branches', 'الفروع'],
-  ['/feedback', 'ملاحظاتك'],
+  ['/feedback', 'ملاحظاتك', 'menu'],
 ];
 
 // «العربة تفتح عالم ماك»: الشعار الأصلي نفسه، ونوافذ الأقسام الست حوله
@@ -88,11 +88,13 @@ ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(
 ${intro ? introMarkup(intro) : ''}
 <a class="skip" href="#main">تخطَّ إلى المحتوى</a>
 <header class="hdr" data-hdr>
-  <a href="/" class="brand" aria-label="ماك سنتر، الصفحة الرئيسية">${LOGO_H}</a>
-  <nav class="nav" aria-label="القائمة الرئيسية">${NAV.map(([h, t]) => `<a href="${h}" class="ul">${t}</a>`).join('')}</nav>
+  <div class="hdr-start">
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" data-menu><span class="menu-lines" aria-hidden="true"><i></i><i></i></span><span class="menu-txt">القائمة</span></button>
+    <a href="/" class="brand" aria-label="ماك سنتر، الصفحة الرئيسية">${LOGO_H}</a>
+  </div>
+  <nav class="nav" aria-label="القائمة الرئيسية">${NAV.filter((n) => !n[2]).map(([h, t]) => `<a href="${h}" class="ul">${t}</a>`).join('')}</nav>
   <div class="hdr-end">
     <a class="hdr-cta ul" href="/subscribe">اشترك في العروض</a>
-    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" data-menu><span class="menu-lines" aria-hidden="true"><i></i><i></i></span><span class="menu-txt">القائمة</span></button>
   </div>
 </header>
 <div class="road" aria-hidden="true" data-road><span class="road-cart">${CART()}</span></div>

@@ -17,6 +17,7 @@ import * as WQ from '../modules/waqr.js';
 import * as N from '../modules/notify.js';
 import * as Rep from '../modules/reports.js';
 import { EVENT_NAMES } from '../modules/events.js';
+import { readiness } from '../modules/readiness.js';
 
 export function apiRoutes(router, db) {
   const auth = (perm) => (req) => {
@@ -376,6 +377,7 @@ export function apiRoutes(router, db) {
     log(req, `settings.${key}`, 'settings', key, b);
     ok(res, getSetting(db, key));
   });
+  router.get('/api/readiness', auth('settings'), (req, res) => ok(res, readiness(db)));
   router.get('/api/integrations', auth('integrations'), (req, res) => {
     ok(res, {
       status: db.prepare('SELECT * FROM integration_status').all(),
