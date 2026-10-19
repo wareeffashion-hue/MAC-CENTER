@@ -1,10 +1,13 @@
-import { HttpError, fail, parseRequest, sendHtml, sendJson, redirect, rateLimit, clientIp } from '../http.js';
+import { HttpError, fail, parseRequest, sendHtml, sendJson, redirect, rateLimit, clientIp, readBody } from '../http.js';
 import { verifyUrlToken } from '../lib/ids.js';
+import { config } from '../config.js';
 import { listBranches, listSections, siteSettings } from '../modules/catalog.js';
 import { trackEvent } from '../modules/events.js';
 import * as A from '../modules/auth.js';
 import * as M from '../modules/plus.js';
 import * as V from '../views/plus-pages.js';
+import * as AW from '../modules/applewallet.js';
+import * as ERP from '../modules/erp.js';
 
 // MAC+‎: الصفحات العامة وواجهات اللوحة
 export function plusRoutes(router, db) {
@@ -54,7 +57,67 @@ export function plusRoutes(router, db) {
     const m = p && p.startsWith('m') ? M.memberSummary(db, Number(p.slice(1))) : null;
     if (!m) throw new HttpError(404, 'انتهت صلاحية رابط البطاقة. اطلب رابطًا جديدًا من الكاشير أو أرسل «بطاقتي» في واتساب.');
     res.setHeader('Cache-Control', 'no-store');
-    html(res, V.plusCardPage({ ...common(), m }));
+    html(res, V.plusCardPage({ ...common(), m, walletUrl: AW.walletEnabled() ? `/plus/card/${req.params.token}/pass.pkpass` : null }));
+  });
+
+  // ————— Apple Wallet —————
+  const sendPass = (res, pass) => {
+    res.writeHead(200, { 'Content-Type': 'application/vnd.apple.pkpass', 'Content-Disposition': 'attachment; filename="mac-plus.pkpass"', 'Last-Modified': new Date(pass.updatedAt.replace(' ', 'T') + 'Z').toUTCString(), 'Cache-Control': 'no-store' });
+    res.end(pass.buffer);
+  };
+  router.get('/plus/card/:token/pass.pkpass', (req, res) => {
+    const p = verifyUrlToken(req.params.token);
+    if (!p || !p.startsWith('m')) throw new HttpError(404, 'انتهت صلاحية رابط البطاقة');
+    if (!AW.walletEnabled()) throw new HttpError(503, 'بطاقة Apple Wallet غير مفعلة بعد');
+    const pass = AW.buildPass(db, Number(p.slice(1)));
+    if (!pass) throw new HttpError(404, 'العضوية غير موجودة');
+    sendPass(res, pass);
+  });
+  // خدمة تحديث البطاقة التي يتصل بها iPhone (مواصفات Apple PassKit Web Service)
+  const passGuard = (req) => {
+    if (!AW.walletEnabled() || req.params.type !== config.appleWallet.passTypeId) throw new HttpError(404, 'غير موجود');
+    if (req.params.serial && !AW.checkAuth(req.params.serial, req.headers.authorization)) throw new HttpError(401, 'غير مصرح');
+  };
+  const empty = (res, status) => { res.writeHead(status); res.end(); };
+  router.post('/wallet/v1/devices/:device/registrations/:type/:serial', async (req, res) => {
+    passGuard(req);
+    let b = {};
+    try { b = JSON.parse((await readBody(req, 4096)).toString('utf8') || '{}'); } catch { return empty(res, 400); }
+    if (!b.pushToken || !AW.memberFromSerial(req.params.serial)) return empty(res, 400);
+    empty(res, AW.registerDevice(db, req.params.device.slice(0, 100), req.params.serial, String(b.pushToken).slice(0, 200)));
+  });
+  router.delete('/wallet/v1/devices/:device/registrations/:type/:serial', (req, res) => { passGuard(req); AW.unregisterDevice(db, req.params.device, req.params.serial); empty(res, 200); });
+  router.get('/wallet/v1/devices/:device/registrations/:type', (req, res) => {
+    passGuard(req);
+    const r = AW.updatedSerials(db, req.params.device, req.query.passesUpdatedSince);
+    if (!r) return empty(res, 204);
+    sendJson(res, 200, r);
+  });
+  router.get('/wallet/v1/passes/:type/:serial', (req, res) => {
+    passGuard(req);
+    const pass = AW.buildPass(db, AW.memberFromSerial(req.params.serial));
+    if (!pass) return empty(res, 404);
+    const since = Date.parse(req.headers['if-modified-since'] || '');
+    if (since && new Date(pass.updatedAt.replace(' ', 'T') + 'Z').getTime() <= since + 999) return empty(res, 304);
+    sendPass(res, pass);
+  });
+  router.post('/wallet/v1/log', async (req, res) => {
+    const b = await readBody(req, 16 * 1024).catch(() => Buffer.from(''));
+    console.warn('[wallet log]', b.toString('utf8').slice(0, 1000));
+    empty(res, 200);
+  });
+
+  // ————— النظام المحاسبي: يرسل الفواتير تلقائيًا —————
+  router.post('/api/webhooks/erp', async (req, res) => {
+    if (!ERP.erpEnabled()) throw new HttpError(503, 'الربط غير مفعل: أضف ERP_WEBHOOK_SECRET');
+    if (!rateLimit(`erp:${clientIp(req)}`, { max: 600, windowMs: 60_000 })) throw new HttpError(429, 'طلبات كثيرة');
+    const raw = await readBody(req, 2 * 1024 * 1024);
+    if (!ERP.verifyErp(raw, req.headers)) throw new HttpError(401, 'مفتاح غير صحيح');
+    let body;
+    try { body = JSON.parse(raw.toString('utf8')); } catch { throw new HttpError(400, 'JSON غير صالح'); }
+    const list = Array.isArray(body) ? body : Array.isArray(body.invoices) ? body.invoices : [body];
+    if (list.length > 500) throw new HttpError(400, 'الحد 500 فاتورة في الطلب');
+    sendJson(res, 200, { ok: true, results: list.map((inv) => ERP.processErpInvoice(db, inv)) });
   });
 
   const reserveCtx = () => ({ ...common(), sections: listSections(db), settings: M.plusSettings(db) });
@@ -208,6 +271,13 @@ export function plusRoutes(router, db) {
     const s = M.savePlusSettings(db, await body(req));
     log(req, 'plus.settings', 'setting', 'plus');
     ok(res, s);
+  });
+
+  router.get('/api/plus/erp', auth('plus.manage'), (req, res) => ok(res, ERP.erpOverview(db, scope(req))));
+  router.put('/api/plus/erp/mapping', auth('plus.manage'), async (req, res) => {
+    const r = ERP.saveErpMapping(db, await body(req));
+    log(req, 'plus.erp_mapping', 'setting', 'erp', { reprocessed: r.reprocessed });
+    ok(res, r);
   });
 
   router.get('/api/plus/report', auth('plus.reports'), (req, res) => ok(res, M.pilotReport(db, scope(req), { days: Math.min(365, Number(req.query.days) || 30) })));

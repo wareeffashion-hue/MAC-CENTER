@@ -19,6 +19,13 @@ function loadSecret() {
   return secret;
 }
 
+// يقبل PEM كما هو أو مرمزًا بـ base64 (أسهل للصق في متغير واحد)
+function pem(v) {
+  if (!v) return null;
+  const t = String(v).trim();
+  return t.includes('-----BEGIN') ? t.replace(/\\n/g, '\n') : Buffer.from(t, 'base64').toString('utf8');
+}
+
 // الرابط العام: PUBLIC_URL، أو نطاق Railway تلقائيًا
 const publicUrl = env.PUBLIC_URL || (env.RAILWAY_PUBLIC_DOMAIN ? `https://${env.RAILWAY_PUBLIC_DOMAIN}` : `http://localhost:${env.PORT || 3000}`);
 
@@ -48,5 +55,16 @@ export const config = {
     refreshToken: env.GOOGLE_REFRESH_TOKEN,
     accountId: env.GOOGLE_ACCOUNT_ID,
   },
+  // بطاقة Apple Wallet: الشهادات بصيغة PEM أو base64 لها، توضع في متغيرات Railway مباشرة
+  appleWallet: {
+    passTypeId: env.APPLE_PASS_TYPE_ID,
+    teamId: env.APPLE_TEAM_ID,
+    cert: pem(env.APPLE_PASS_CERT),
+    key: pem(env.APPLE_PASS_KEY),
+    keyPassword: env.APPLE_PASS_KEY_PASSWORD,
+    wwdr: pem(env.APPLE_WWDR_CERT),
+  },
+  // النظام المحاسبي يرسل الفواتير إلى /api/webhooks/erp بهذا المفتاح
+  erp: { secret: env.ERP_WEBHOOK_SECRET },
   uploads: { maxImageBytes: 10 * 1024 * 1024, maxTicketImages: 3 },
 };

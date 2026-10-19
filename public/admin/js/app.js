@@ -11,6 +11,7 @@ const ROUTES = [
   { path: 'requests', title: 'الحجز والطلبات', icon: 'clock', perm: 'requests', load: () => import('./views/requests.js'), badge: 'requests' },
   { path: 'looks', title: 'إطلالات المناسبات', icon: 'gift', perm: 'plus.manage', load: () => import('./views/looks.js') },
   { path: 'pilot', title: 'تجربة MAC+‎', icon: 'chart', perm: ['plus.reports', 'plus.manage'], load: () => import('./views/pilot.js') },
+  { path: 'erp', title: 'ربط النظام المحاسبي', icon: 'plug', perm: 'plus.manage', load: () => import('./views/erp.js') },
   { group: 'التسويق' },
   { path: 'offers', title: 'العروض', icon: 'gift', perm: ['offers', 'offers.view'], load: () => import('./views/offers.js') },
   { path: 'campaigns', title: 'الحملات', icon: 'send', perm: 'campaigns', load: () => import('./views/campaigns.js') },

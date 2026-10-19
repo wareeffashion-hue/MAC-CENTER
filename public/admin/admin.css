@@ -445,3 +445,5 @@ a.li:hover { background: var(--soft); }
 .tbl td.acts .btn + .btn { margin-inline-start: 6px; }
 .form h4 { margin: 8px 0 -4px; color: var(--green-dk); }
 @media (max-width: 700px) { .look-row { grid-template-columns: 1fr 1fr; } .counter-search .card-b { flex-wrap: wrap; } }
+.map-row { display: grid; grid-template-columns: minmax(90px, 1fr) minmax(0, 1.4fr); align-items: center; gap: 10px; }
+.map-row > span:first-child { margin: 0; }

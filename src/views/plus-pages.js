@@ -66,17 +66,18 @@ export function plusStatusPage({ site, branches, statusKey, status: st, waUrl })
 }
 
 // ———————————————————— بطاقة العضو ————————————————————
-export function plusCardPage({ site, branches, m }) {
+export function plusCardPage({ site, branches, m, walletUrl }) {
   const tiers = m.settings.tiers;
   const share = `https://wa.me/?text=${encodeURIComponent(`انضم معي إلى MAC+‎ من ماك سنتر واحصل على رصيد ترحيبي: ${m.referralUrl}`)}`;
   const body = `<section class="mcard-page">
-    <div class="mcard" aria-label="بطاقة عضوية MAC+‎">
+    <div class="mcard-col"><div class="mcard" aria-label="بطاقة عضوية MAC+‎">
       <div class="mcard-top">${CART('mcard-cart')}<span>MAC+‎</span></div>
       <p class="mcard-name">${esc(m.name || 'عضو ماك سنتر')}</p>
       <div class="mcard-bal"><span>رصيدك</span><b>${sar(m.balance)}</b></div>
       <div class="mcard-qr">${qrSvg(m.refCode, { margin: 2 })}<p dir="ltr">${esc(m.refCode)}</p></div>
       <p class="mcard-hint">أظهر الرمز للكاشير مع كل فاتورة</p>
     </div>
+    ${walletUrl ? `<a class="awallet" href="${esc(walletUrl)}" data-awallet><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" fill="#fff"/><path d="M3 9h18" stroke="#0B6446" stroke-width="2"/><path d="M3 12h18" stroke="#FFBA1D" stroke-width="2"/><path d="M3 15h18" stroke="#E5484D" stroke-width="2"/></svg><span><small>أضف إلى</small>Apple Wallet</span></a>` : ''}</div>
     <div class="mcard-side">
       <h1>بطاقتك</h1>
       <dl class="mcard-stats"><div><dt>الفواتير</dt><dd>${AR(m.invoiceCount)}</dd></div><div><dt>أصدقاء انضموا</dt><dd>${AR(m.referrals.count)}</dd></div><div><dt>عضو منذ</dt><dd>${esc(String(m.since).slice(0, 10))}</dd></div></dl>

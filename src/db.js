@@ -459,6 +459,42 @@ const SCHEMA = [
     PRIMARY KEY (branch_id, day)
   );
   `,
+  // Apple Wallet والربط مع النظام المحاسبي
+  `
+  ALTER TABLE members ADD COLUMN pass_updated_at TEXT;
+  ALTER TABLE invoices ADD COLUMN source TEXT NOT NULL DEFAULT 'counter';
+  ALTER TABLE invoices ADD COLUMN returned INTEGER NOT NULL DEFAULT 0;
+  ALTER TABLE branch_days ADD COLUMN source TEXT NOT NULL DEFAULT 'manual';
+  CREATE TABLE wallet_devices (
+    device_id TEXT NOT NULL,
+    serial TEXT NOT NULL,
+    push_token TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (device_id, serial)
+  );
+  CREATE INDEX idx_wallet_devices_serial ON wallet_devices(serial);
+  CREATE TABLE erp_invoices (
+    id INTEGER PRIMARY KEY,
+    branch_code TEXT NOT NULL,
+    branch_id INTEGER REFERENCES branches(id),
+    invoice_no TEXT NOT NULL,
+    kind TEXT NOT NULL CHECK (kind IN ('sale','return')),
+    original_no TEXT,
+    total REAL NOT NULL,
+    day TEXT NOT NULL,
+    phone TEXT,
+    member_code TEXT,
+    categories TEXT NOT NULL DEFAULT '[]',
+    section_ids TEXT NOT NULL DEFAULT '[]',
+    member_id INTEGER REFERENCES members(id),
+    invoice_id INTEGER REFERENCES invoices(id),
+    status TEXT NOT NULL,
+    note TEXT,
+    received_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (branch_code, invoice_no, kind)
+  );
+  CREATE INDEX idx_erp_day ON erp_invoices(branch_id, day);
+  `,
 ];
 
 export function openDb(file = join(config.dataDir, 'mac-center.db')) {

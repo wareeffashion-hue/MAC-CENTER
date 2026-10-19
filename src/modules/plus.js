@@ -9,6 +9,7 @@ import { trackEvent } from './events.js';
 import { driver, sendingNumber } from './whatsapp.js';
 import { notifyRole } from './notify.js';
 import { waLink } from './catalog.js';
+import { passChanged, walletEnabled } from './applewallet.js';
 
 export const PLUS_CONSENT = 'أوافق على تسجيل رقمي في عضوية MAC+‎ واستلام رسائل الرصيد والعروض من ماك سنتر عبر واتساب، ويمكنني الإيقاف في أي وقت.';
 export const REQUEST_KIND = { reserve: 'حجز قطعة أو مقاس', collect: 'اطلب واستلم', find: 'لقيناه لك' };
@@ -121,6 +122,7 @@ export function balance(db, memberId, invoiceAmount = null) {
 export function credit(db, memberId, kind, amount, { days: d = 60, minInvoice = 0, invoiceId = null, note = null, userId = null } = {}) {
   const a = r2(amount);
   if (!(a > 0)) return null;
+  passChanged(db, memberId);
   return Number(db.prepare(`INSERT INTO wallet_entries (member_id, kind, amount, remaining, min_invoice, invoice_id, expires_at, note, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .run(memberId, kind, a, a, minInvoice, invoiceId, d ? sqlNow(days(d)) : null, note, userId).lastInsertRowid);
 }
@@ -136,6 +138,7 @@ function redeem(db, memberId, amount, invoiceAmount, invoiceId, userId) {
   }
   const used = r2(amount - left);
   if (used > 0) db.prepare(`INSERT INTO wallet_entries (member_id, kind, amount, invoice_id, created_by) VALUES (?, 'redeem', ?, ?, ?)`).run(memberId, -used, invoiceId, userId);
+  if (used > 0) passChanged(db, memberId);
   return used;
 }
 export function adjustWallet(db, user, memberId, amount, note) {
@@ -155,6 +158,7 @@ export function expireCredits(db) {
       db.prepare("INSERT INTO wallet_entries (member_id, kind, amount, note) VALUES (?, 'expire', ?, ?)").run(r.member_id, -r.remaining, `رصيد #${r.id}`);
       db.prepare('UPDATE wallet_entries SET remaining = 0 WHERE id = ?').run(r.id);
     }
+    for (const id of new Set(rows.map((r) => r.member_id))) passChanged(db, id);
   });
   return rows.length;
 }
@@ -164,8 +168,10 @@ function cleanSections(db, ids) {
   const valid = new Set(db.prepare('SELECT id FROM sections').all().map((s) => s.id));
   return [...new Set((Array.isArray(ids) ? ids : String(ids || '').split(',')).map(Number).filter((n) => valid.has(n)))];
 }
-export function previewInvoice(db, { memberId, amount, sectionIds, useWallet }) {
+export function previewInvoice(db, { memberId, amount, sectionIds, useWallet, mode }) {
   const st = plusSettings(db);
+  // فاتورة مدفوعة سلفًا (من النظام المحاسبي) لا يُخصم منها؛ تتحول مكافأتها إلى رصيد
+  const rewardMode = mode === 'wallet' ? 'wallet' : st.rewardMode;
   const amt = r2(amount) || 0;
   const secs = cleanSections(db, sectionIds);
   // المجموعة الضابطة (إن فُعّلت) تُسجل فواتيرها دون خصم خطوط العربة لقياس الأثر الحقيقي
@@ -173,10 +179,10 @@ export function previewInvoice(db, { memberId, amount, sectionIds, useWallet }) 
   const pct = control ? 0 : tierFor(secs.length, st.tiers);
   const reward = r2(amt * pct / 100);
   const available = memberId ? balance(db, memberId, amt) : 0;
-  const discount = st.rewardMode === 'discount' ? reward : 0;
+  const discount = rewardMode === 'discount' ? reward : 0;
   const walletApplied = useWallet ? r2(Math.min(available, Math.max(0, amt - discount))) : 0;
   const next = control ? null : st.tiers.find((t) => t.min > secs.length);
-  return { amount: amt, deptCount: secs.length, control, pct, reward, mode: st.rewardMode, discount, walletAvailable: available, walletApplied,
+  return { amount: amt, deptCount: secs.length, control, pct, reward, mode: rewardMode, discount, walletAvailable: available, walletApplied,
     payable: r2(amt - discount - walletApplied), nextTier: next ? { need: next.min - secs.length, pct: next.pct } : null };
 }
 
@@ -196,14 +202,15 @@ export function recordInvoice(db, user, scope, input) {
   if (!secs.length) errors.sectionIds = 'اختر قسمًا واحدًا على الأقل';
   if (Object.keys(errors).length) fail(400, 'راجع بيانات الفاتورة', errors);
   if (db.prepare('SELECT 1 FROM invoices WHERE branch_id = ? AND ref = ?').get(branchId, ref)) fail(409, 'هذه الفاتورة مسجلة من قبل', { ref: 'مسجلة' });
-  const pv = previewInvoice(db, { memberId: member.id, amount, sectionIds: secs, useWallet: input.useWallet === true || input.useWallet === 'on' });
+  const fromErp = input.source === 'erp';
+  const pv = previewInvoice(db, { memberId: member.id, amount, sectionIds: secs, useWallet: !fromErp && (input.useWallet === true || input.useWallet === 'on'), mode: fromErp ? 'wallet' : undefined });
 
   const out = tx(db, () => {
     let gift = null;
     if (input.gift === true || input.gift === 'on') { do gift = code(8); while (db.prepare('SELECT 1 FROM invoices WHERE gift_code = ?').get(gift)); }
-    const invId = Number(db.prepare(`INSERT INTO invoices (member_id, branch_id, ref, amount, section_ids, dept_count, tier_pct, reward, reward_mode, gift_code, created_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(member.id, branchId, ref, amount, JSON.stringify(secs), secs.length, pv.pct, pv.reward, pv.mode, gift, user.id).lastInsertRowid);
-    const used = pv.walletApplied > 0 ? redeem(db, member.id, pv.walletApplied, amount, invId, user.id) : 0;
+    const invId = Number(db.prepare(`INSERT INTO invoices (member_id, branch_id, ref, amount, section_ids, dept_count, tier_pct, reward, reward_mode, gift_code, created_by, source)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(member.id, branchId, ref, amount, JSON.stringify(secs), secs.length, pv.pct, pv.reward, pv.mode, gift, user?.id || null, fromErp ? 'erp' : 'counter').lastInsertRowid);
+    const used = pv.walletApplied > 0 ? redeem(db, member.id, pv.walletApplied, amount, invId, user?.id || null) : 0;
     if (used) db.prepare('UPDATE invoices SET wallet_used = ? WHERE id = ?').run(used, invId);
     if (pv.mode === 'wallet' && pv.reward > 0) credit(db, member.id, 'tier', pv.reward, { days: st.walletDays, invoiceId: invId, note: `${pv.deptCount} أقسام · ${pv.pct}%` });
     // مكافأة صاحب الدعوة بعد أول فاتورة مؤهلة للصديق، بسقف شهري
@@ -225,6 +232,7 @@ export function recordInvoice(db, user, scope, input) {
   if (pv.pct) lines.push(pv.mode === 'discount' ? `خطوط العربة: خصم ${pv.pct}% (${pv.reward} ريال)` : `خطوط العربة: أضفنا ${pv.reward} ريال لرصيدك`);
   else if (pv.nextTier) lines.push(`أضف ${pv.nextTier.need} ${pv.nextTier.need === 1 ? 'قسمًا' : 'أقسام'} في زيارتك القادمة واحصل على ${pv.nextTier.pct}%`);
   if (out.walletUsed) lines.push(`استخدمت ${out.walletUsed} ريال من رصيدك`);
+  if (input.invoiceUrl && /^https:\/\//.test(input.invoiceUrl)) lines.push(`فاتورتك الإلكترونية: ${input.invoiceUrl}`);
   lines.push(`رصيدك الآن: ${after} ريال`, `بطاقتك: ${cardUrl(member.id)}`);
   waSend(member.phone, lines.join('\n'));
   if (out.referrerRewarded) {
@@ -407,7 +415,8 @@ export function handlePlusMessage(db, waId, text, name) {
     `تسوّق من أكثر من قسم في الفاتورة نفسها وارفع خطوط عربتك: ${plusSettings(db).tiers.map((t) => `${t.min} أقسام ${t.pct}%`).join('، ')}.`, `بطاقتك: ${cardUrl(member.id)}`, `ادعُ صديقًا: ${referralUrl(member.ref_code)}`].filter(Boolean).join('\n');
 }
 
-const cardText = (db, mem) => [`بطاقة MAC+‎ · ${mem.ref_code}`, `رصيدك: ${balance(db, mem.id)} ريال`, `بطاقتك: ${cardUrl(mem.id)}`, `ادعُ صديقًا: ${referralUrl(mem.ref_code)}`].join('\n');
+const cardText = (db, mem) => [`بطاقة MAC+‎ · ${mem.ref_code}`, `رصيدك: ${balance(db, mem.id)} ريال`, `بطاقتك: ${cardUrl(mem.id)}`,
+  walletEnabled() ? `أضفها إلى Apple Wallet: ${cardUrl(mem.id)}/pass.pkpass` : null, `ادعُ صديقًا: ${referralUrl(mem.ref_code)}`].filter(Boolean).join('\n');
 export function sendCard(db, memberId) {
   const mem = db.prepare('SELECT * FROM members WHERE id = ?').get(memberId);
   if (mem) waSend(mem.phone, cardText(db, mem));
@@ -430,7 +439,7 @@ export function saveBranchDay(db, scope, input) {
 export function pilotReport(db, scope, { days: d = 30 } = {}) {
   const from = sqlNow(days(-d)), fromDay = from.slice(0, 10);
   const inScope = (bid) => scope === null || scope.includes(bid);
-  const inv = db.prepare('SELECT i.*, m.control, m.referred_by FROM invoices i JOIN members m ON m.id = i.member_id WHERE i.created_at >= ?').all(from).filter((i) => inScope(i.branch_id));
+  const inv = db.prepare('SELECT i.*, m.control, m.referred_by FROM invoices i JOIN members m ON m.id = i.member_id WHERE i.created_at >= ? AND i.returned = 0').all(from).filter((i) => inScope(i.branch_id));
   const daysRows = db.prepare('SELECT * FROM branch_days WHERE day >= ?').all(fromDay).filter((r) => inScope(r.branch_id));
   const sum = (a, f) => a.reduce((s, x) => s + f(x), 0);
   const memberSales = sum(inv, (i) => i.amount);
